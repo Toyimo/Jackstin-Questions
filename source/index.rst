@@ -7,7 +7,7 @@ Welcome to Jackstin's question list's documentation!
 ====================================================
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 5
    :caption: Contents:
    
    Q202007.rst
