@@ -137,7 +137,7 @@ Q2 地下管线建模
 
 归纳一下暂行的解决方案，使用的流程如下图所示。
 
-.. figure:: pic/VisualTube3d.svg
+.. figure:: pic/VisualTube3d.png
    :align: center
    :scale: 62
 
