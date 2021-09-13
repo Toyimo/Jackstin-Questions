@@ -1,0 +1,1116 @@
+Question List in March, 2021
+============================
+
+🌱 Little did we know that beneath the cold hard ground the plants and
+trees were preparing for rebirth.
+
+《道德经》
+
+道冲，用之或不盈。渊兮，似万物之宗。挫其锐，解其纷，和其光，同其尘，湛兮，似或存。吾不知谁之子，象帝之先。
+
+《庄子》 德允符
+
+鲁哀公问于仲尼曰：“卫有恶人焉，曰哀骀（tái）它（tuō）。丈夫与之处者，思而不能去也。妇人见之，请于父母曰‘与为人妻，宁为夫子妾’者，十数而未止也。未尝有闻其唱者也，常和人而已矣。无君人之位以济乎人之死，无聚禄以望人之腹。又以恶骇天下，和而不唱，知不出乎四域，且而雌雄合乎前，是必有异乎人者也。寡人召而观之，果以恶骇天下。与寡人处，不至以月数，而寡人有意乎其为人也；不至乎期（jī）年，而寡人信之。国无宰，寡人传国焉。闷然而后应。氾而若辞，寡人丑乎，卒授之国。无几何也，去寡人而行，寡人恤焉若有亡也，若无与乐是国也。是何人者也？”
+
+仲尼曰：“丘也尝使于楚矣，适见子食于其死母者，少焉眴（shùn）若皆弃之而走。不见己焉尔，不得类焉尔。所爱其母者，非爱其形也，爱使其形者也。战而死者，其人之葬也不以翣（shà）资；刖（yuè）者之屦（jù），无为爱之；皆无其本矣。为天子之诸御，不爪翦（jiǎn），不穿耳；取妻者止于外，不得复使。形全犹足以为尔，而况全德之人乎！今哀骀它未言而信，无功而亲，使人授己国，唯恐其不受也，是必才全而德不形者也。”
+
+哀公曰：“何谓才全？”
+
+仲尼曰：“死生存亡，穷达贫富，贤与不肖毁誉，饥渴寒暑，是事之变，命之行也；日夜相代乎前，而知不能规乎其始者也。故不足以滑（gǔ）和，不可入于灵府。使之和豫，通而不失于兑（yuè），使日夜无郤（xì）而与物为春，是接而生时于心者也。是之谓才全。”“何谓德不形？”曰：“平者，水停之盛也。其可以为法也，内保之而外不荡也。德者，成和之脩也。德不形者，物不能离也。”
+
+哀公异日以告闵子曰：“始也吾以南面而君天下，执民之纪而忧其死，吾自以为至通矣。今吾闻至人之言，恐吾无其实，轻用吾身而亡其国。吾与孔丘，非君臣也，德友而已矣。
+
+Q1、OSG 节点访问器
+------------------
+
+OSG
+的节点访问器结合了\ **节点遍历器**\ 和设计结构中的\ **访问者模式**\ 来构筑代码结构。抽象访问者的作用是声明访问者可以访问哪些元素，具体到OSG
+中是\ ``apply()``\ 方法。OSG 的节点访问设计中 **NodeVisitor**
+类定义了哪些类可以访问，其有两个重要函数：\ ``void traverse(Node &node)``
+和 ``void apply()`` 函数；前者用来遍历，后者用来将遍历后的结果返回给
+**NodeVisitor** 节点遍历器。
+
+**NodeVisitor**
+只是访问器角色的抽象接口，使用其执行自定义操作时需要继承并重写
+``apply()`` 函数，Node
+类中的访问接口为\ ``void accept(NodeVisitor& nv)``\ 。对节点的访问从节点接受一个访问器开始，将一个具体的访问器对象传递给节点，节点反过来执行访问器的
+``apply()`` 函数，并将自己传入访问器。
+
+.. _11-访问者模式:
+
+1.1 访问者模式
+~~~~~~~~~~~~~~
+
+**访问者模式**\ 是一种将数据操作和数据结构分离的设计模式，表示一个作用于某对象结构中的各元素的操作。这里拿
+osg::NodeVisitor 访问者模式的设计来进行分析。
+
+如上图所示，一般而言访问元素是不能轻易变化的，所以 OSG 将 Node
+作为大多数节点的父类来设计节点访问器，这样一来在一些需要进行自定义访问函数的地方就可以直接继承访问者来设计我们需要的节点访问器了。
+
+.. _12-获取文件名判断数字:
+
+1.2 获取文件名判断数字
+~~~~~~~~~~~~~~~~~~~~~~
+
+主要用到了两个方法，也即 osg::PagedLOD 的 ``getNumFileNames()`` 方法和
+``getFileName()``
+方法。依据这两个方法来寻找实景三维模型的节点调用地址，以便于找到对应文件转换为
+b3dm 格式。判断文件名是否为纯数字的方法有如下三种：
+
+**（1）正则表达式**
+
+.. code:: c++
+
+   #include <Regex>
+   #include <iostream>
+   #include <string>
+
+   int _tmain(int argc, _TCHAR* argv[])
+   {
+       std::string str ("123441115111111");
+       std::regex rx("[0-9]+");
+       bool bl = std::regex_match(str.begin(),str.end(), rx);
+       if (bl)
+           std::cout << "the string is all numbers" << std::endl;
+       else
+           std::cout << "the string contains non numbers" << std::endl;
+       getchar();
+       return 0;
+   }
+
+**（2）用 isdigit 判断**
+
+.. code:: c++
+
+   bool is_digits(const std::string &str)
+   {
+       return str.find_first_not_of("0123456789") == std::string::npos;
+   }
+
+**（3）用 find_first_not_of 判断**
+
+.. code:: c++
+
+   bool is_digits(const std::string &str)
+   {
+       return std::all_of(str.begin(), str.end(), ::isdigit); // C++11
+   }
+
+.. _13-再提正则表达式:
+
+1.3 再提正则表达式
+~~~~~~~~~~~~~~~~~~
+
+这次从一段代码开始，该代码预计实现根据符号“/”或符号“\”来分割路径到数组中。下面代码中的字符串预期得到的结果是数组：[“D:”,”temp”,”folder”,”x64”,”Release”,”b45485.osgb”]。
+
+.. code:: c++
+
+   std::string path = "D:\temp\folder/x64\\Release/b45485.osgb";
+   std::string str= "([^\\\\/]+)";
+   std::regex e(str);
+   std::smatch m;
+   std::regex_search(path, m, e);
+
+以上为部分代码，可以利用元组将字符串分割到 ``std::smatch`` 中。但这个
+``std::smatch`` 是什么呢？
+
+.. code:: c++
+
+   typedef match_results<string::const_iterator> smatch;
+
+原来就是常用的 ``std::match_results`` 匹配结果容器，参考文献 8
+中的代码示例，接着写后续代码。
+
+.. code:: c++
+
+   std::vector<std::string> results;
+   std::smatch::const_iterator it;
+   for (it = m.begin(); it != m.end(); it++) {
+       std::string result = it->str();
+       results.push_back(result);
+   }
+
+到这里，并未完成分割字符串到数组的功能。 ``std::regex_search``
+不要求整个字符序列完全匹配，只进行单次搜索，搜索到即停止继续搜索，不进行重复多次搜索。
+
+.. _14-遍历三维信息:
+
+1.4 遍历三维信息
+~~~~~~~~~~~~~~~~
+
+内容建议参考 9 号参考文献。
+
+.. _15-overlaynode-子图隐藏:
+
+1.5 OverlayNode 子图隐藏
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+研究 OSG 中对 ``osgSim::OverlayNode``
+中的矢量节点的隐藏时发现了很多问题，原来的思路有很多，比如说：1.设置矢量子图
+``setNodeMask(0)`` ；2. 从子图中移除矢量节点；3. 在 ``OverlayNode``
+中设置子节点为不贴地后再重新隐藏；4. 实在不行重新加载 XML
+数据等等。前三种思路都卡在了同一个地方，即 ``OverlayNode``
+将矢量渲染为纹理并贴到模型上之后，后续的子图节点移除操作就都失效了。在
+``OverlayNode`` 中发现了两个方法：
+
+.. code:: c++
+
+   OverlayNode::dirtyTextureUnit(); // 试了，无效
+   OverlayNode::releaseGLObjects(); // 试了，有效，但模型变黑了
+
+这里的 ``releaseGLObjects()``
+方法虽然有效，但却在渲染过程中丢失了模型的信息，从而导致模型变黑了；研究源码发现在执行过程中它主要释放了如下几个
+OpenGL 对象：
+
+.. code:: c++
+
+   osg::Group::             releaseGLObjects();
+   _camera               -> releaseGLObjects();
+   _texgenNode           -> releaseGLObjects();
+   _overlayStateSet      -> releaseGLObjects();
+   _mainiSubgraphStateSet-> releaseGLObjects();
+   _texture              -> releaseGLObjects();
+
+所以可以推测错误，就是出现在 OverlayStateSet 和 SubgraphStateSet
+的释放上了。这里继承 OverlayNode 给他写个函数 ``releaseTextureObject()``
+即可清空当前 Overlay 节点下的所有纹理状态。重写时，不去析构所有的 Group
+字节点即可解决模型变黑的问题。
+
+设置显示隐藏的策略是：通过程序主窗体获取矢量节点的文件名 >>
+通过文件名获取矢量节点所链接的模型名 >> 通过模型名找到 Ovelay 节点 >>
+设置 Overlay
+节点下的矢量节点的显示或隐藏。这里在创建矢量节点时发现了个新的好用的东西：
+
+.. code:: c++
+
+   osg::Node::addDescription(const std::string& desc)
+
+这段代码是为 Node 添加注释，而且通过阅读源码发现这个注释实际上放到了一个
+``std::vector<std::string>`` 当中，所以可以添加多个说明，并通过
+``getDescriptions()`` 获取所有注释说明。
+
+.. _参考文献-1:
+
+参考文献
+~~~~~~~~
+
+1. CSDN.
+   `OSG节点访问和遍历 <https://blog.csdn.net/danshiming/article/details/109560162>`__\ [EB/OL].
+
+2. CSDN.
+   `访问者模式及其在OSG中的理解 <https://blog.csdn.net/qq_31709249/article/details/87525414>`__\ [EB/OL].//OSG访问器
+
+3. CSDN.
+   `OSG几何体的图元的遍历 <https://blog.csdn.net/csxiaoshui/article/details/78193744>`__\ [EB/OL].
+
+4. 博客园.
+   `GoF设计模式 <https://www.cnblogs.com/leigepython/p/9996430.html>`__\ [EB/OL].//23种设计模式的集中简要概括
+
+5. CSDN.
+   `OSG节点遍历 <https://blog.csdn.net/niu2212035673/article/details/75197843>`__\ [EB/OL].
+
+6. 简书.
+   `访问者模式一篇就够了 <https://www.jianshu.com/p/1f1049d0a0f4>`__\ [EB/OL].//解释的较为易懂
+
+7. Microsoft.
+   `C++用正则表达式判断输入的字符串全为数字 <https://social.msdn.microsoft.com/Forums/zh-CN/5a76cbca-e074-42bf-9774-1ba371dbbc13/c?forum=visualcpluszhchs>`__\ [EB/OL].
+
+8. CSDN博客. `Cpp标准库之 std::regex
+   类的使用 <https://blog.csdn.net/l357630798/article/details/78235307>`__\ [EB/OL].
+
+9. CSDN博客.\ `OSG获取模型坐标点、索引、法向量、纹理等数据 <https://blog.csdn.net/qq_31709249/article/details/94357183>`__\ [EB/OL].
+
+Q2、点云
+--------
+
+.. _21-数据格式:
+
+2.1 数据格式
+~~~~~~~~~~~~
+
+选择目前主流点云处理软件支持的格式：MeshLab 软件支持 \*.xyz 格式以及
+\*.ply 格式的点云数据，PCL 第三方开源库支持 \*.pcd
+格式的二进制点云数据。将点云中的点表示为 :math:`P=(x,y,z)`
+，此后描述的文件均以此为例。
+
+**XYZ 格式。**\ 该格式通常没有文件标准，是 ASCII
+明码点云格式体系中的一种，其他如 \*.txt 格式等，明码为：
+
+.. code:: 
+
+   x y z
+
+**PCD 格式。**\ 该格式为二进制点云数据专属格式，通常用于 PCL 点云库中；
+
+**PLY 格式。**\ 该格式是一种多边形文件格式，由 Stanford 大学的 Turk
+等人设计开发；
+
+.. _22-参考文献:
+
+2.2 参考文献
+~~~~~~~~~~~~
+
+1. PCL点云处理库.pcl_mesh_sampling.
+
+2. 知乎.\ `计算几何之计算三角形的外接圆 <https://www.zhihu.com/question/37577447>`__\ [EB/OL].
+
+3. CSDN博客.\ `已知三维空间的三个点，如何计算对应三角形的外心 <https://blog.csdn.net/w565066157/article/details/80847227>`__\ [EB/OL].
+
+4. CSDN博客.\ `局部多项式插值法LPI的工作原理 <https://blog.csdn.net/shengmingqijiquan/article/details/52355066>`__\ [EB/OL].
+
+Q3、C++日常
+-----------
+
+.. _31-静态成员变量:
+
+3.1 静态成员变量
+~~~~~~~~~~~~~~~~
+
+今儿发现个奇奇怪怪的
+BUG，简单摘录如下。定义一个幻视类，这个类的主要功能是创造幻视，每创建一个为其赋予一个唯一标识符，其头文件如下：
+
+.. code:: c++
+
+   /* 在头文件中定义“幻视”类. */
+   #ifndef _VISION_H
+   #def _VISION_H
+   class Vision{
+   public:
+       // 创造一个“幻视”
+       void create();
+       // 返回幻视的 ID 标识
+       int id() { return _index - 1; }
+   private:
+       // 这是第几个被创建的幻视
+       static int _index;
+   }
+   #endif
+
+其 CPP 文件如下：
+
+.. code:: c
+
+   int Vision::_index = 0;
+   void Vision::create(){ _index++; }
+
+如上所示，如果我们程序中创建一个幻视，并输出此次创建的“幻视”的
+ID，代码为：
+
+.. code:: c
+
+   Vision v1;
+   v1.create();
+   printf("Vision %02d", v1.id());
+
+此时，应该输出：Vision 00，然而在不同的编译器中，其可能输出的是：Vision
+-01。这是为啥呢，通过调试可以发现，调用 ``create()`` 函数后，CPP
+中静态的 ``_index`` 变量已经是 1
+了；然而在头文件中返回该值时，这个值为仍然为
+0。秉持静态成员变量的域在当前文件的要求，返回该值的函数应该写在 CPP 中：
+
+.. code:: c++
+
+   /*--- Vision.h ---*/
+   class Vision{
+   public:
+       // 创造一个“幻视”
+       void create();
+       // 返回幻视的 ID 标识
+       int id();
+   private:
+       // 这是第几个被创建的幻视
+       static int _index;
+   }
+   /*--- Vision.cpp ---*/
+   int Vision::_index = 0;
+   int Vision::id(){ return _index - 1; }
+   void Vision::create(){ _index++; }
+
+由此，解决了这个奇奇怪怪的 BUG。
+
+.. _32-pycharm打包exe报错:
+
+3.2 PyCharm打包exe报错
+~~~~~~~~~~~~~~~~~~~~~~
+
+提示：NameError: name ‘raw_input’ is not defined.
+至于如何解决这个问题，网上有不同的答案，我们通过分析和实验来找到正确的。首先，生成程序要用
+``pip`` 工具安装 ``pyinstaller`` 程序包：
+
+.. code:: 
+
+   pip install pyinstaller
+
+安装后，打包程序的命令是：
+
+.. code:: 
+
+   pyinstaller -F -w main.py
+
+这里，\ ``-F`` 指生成单个可执行程序文件，\ ``-w``
+是指禁止弹出黑色的命令行窗口。
+
+网上说 ``row_input()`` 函数时 Python 2.X 版本所使用的命令，Python 3.X
+版本应该使用 ``input()``
+函数；本次用程序进行打包时编译通过，证明版本正确。参考文献 1
+的加包也无法根治问题。所以问题出在 pyinstaller 所使用的 Python
+版本不对。折腾半天，还是直接换函数好了，服了。
+
+.. _33-gvim打印代码带行号:
+
+3.3 GVIM打印代码带行号
+~~~~~~~~~~~~~~~~~~~~~~
+
+.. code:: 
+
+   set printoptions = number:y
+
+.. _34-qt-打包程序:
+
+3.4 Qt 打包程序
+~~~~~~~~~~~~~~~
+
+使用 Qt 打包 exe 的过程很简单：1. 拷贝 release 中 exe
+文件到新建文件夹中；2. 打开 Qt 5.15.2 窗口跳转到新建文件夹中，输入：
+
+   ``windeployqt test.exe``
+
+由此即可得到 exe 程序的发布集合，如果需要后续执行打包处理，则可使用
+Enigma Virtual Box 进行打包；如果后续还需对程序进行加密，则可使用 The
+Enigma Protector 执行加密处理。
+
+.. _35-qt-调用其他-exe:
+
+3.5 Qt 调用其他 EXE
+~~~~~~~~~~~~~~~~~~~
+
+使用 Qt 调用其他 EXE 程序的操作主要在 ``QProcess``
+类中进行，这里有几个关键点暂时没搞明白，可能需要留到清明节之后再予以处理了：
+
+-  在使用 QProcess 调用其他 exe 程序时，指定运行环境在 exe 程序目录下；
+
+-  如何根据 exe 返回的消息动态刷新界面中的控件消息；
+
+.. _参考文献-2:
+
+参考文献
+~~~~~~~~
+
+1. CSDN博客.\ `pyinstaller生成exe后无法执行 <https://blog.csdn.net/Mr0Yang/article/details/51714581>`__\ [EB/OL].
+
+2. CSDN博客.\ `让Vim打印到纸上时显示行号 <https://blog.csdn.net/xiliuhu/article/details/6047658>`__\ [EB/OL].
+
+Q4、B3DM
+--------
+
+B3DM，\ *Batched 3D Data
+Model*\ ，译为批处理三维模型，支持三维模型离线批处理并通过数据流传送到网络客户端进行渲染和交互。B3DM
+是由头文件和数据体两部分组成的，使用 glTF 格式存储的二进制文件；其在
+glTF 数据格式的基础上添加了属性表信息，每个模型都是一个要素。
+
+.. _41-b3dm-格式剖析:
+
+4.1 B3DM 格式剖析
+~~~~~~~~~~~~~~~~~
+
+B3DM 文件由 28 字节的文件头和 :math:`x` 字节的文件体构成；头文件的前 4
+个字节为 magic 码，设定为ASCII 字符 “b3dm”；5~8 字节是作为 B3DM
+版本号的整形变量，目前为 1；9~12
+字节表示包含头文件在内的文件总字节长度，即 :math:`28+x`\ ；13~28
+字节分别以 4 字节整形变量存储 Featrue Table、Batch Table 的 JSON
+字节长度和二进制文件长度。
+
+如上图所示，B3DM 格式作为 3DTiles 网络端三维模型存储格式中的一种，共享
+3DTiles 的通用头文件和文件体的结构和布局。B3DM
+文件体也可存储\ **属性表（\ Feature Table\ ）**\ 和\ **批次表（\ Batch
+Table\ ）**\ 信息，属性表一般存储诸如模型位置等的一些必要的渲染属性信息；而批次表的设计理念与
+GIS
+应用中的文本属性信息十分相似，如模型高度、楼层数等信息统统可以放在批次表
+Batch Table 中进行存储。二进制文件的余下部分将以二进制 glTF
+的格式进行存储。
+
+Feature Table
+^^^^^^^^^^^^^
+
+如本节第一幅图所示，Feature Table 由 JSON Header 和 Binary Body
+两部分构成；JSON Header 以 JSON 格式存储了属性表中存储的各个属性，Binary
+Body
+则以紧凑二进制的形式存储了相关属性的实际数值，使用二进制值的唯一方式是通过
+JSON Header 中存储的偏移量寻访相应的数据段。
+
+对于所有 3DTiles 格式而言 Feature Table
+都是必要的，该属性表存储了一些瓦片中要素绘制的关键几何值数组，这些存储在
+Feature Table
+中的值包括两种：一是\ **全局属性信息**\ ，比如点云数据的点数、实例模型
+I3DM
+中几何实例的个数；二是\ **要素属性信息**\ ，比如点云数据中每个点的位置、实例模型中每个实例的位置，这些属性信息均以偏移量的形式存储，使用时需要根据偏移值在二进制文件中寻找对应的数据段。以
+``byteOffset`` 所指向的要素属性类型取决于要素的属性，如 ``POSITION``
+的语义可以解析为 3 维 ``float`` 数组。
+
+Batch Table
+^^^^^^^^^^^
+
+而 Batch Table
+则不那么必要了，这里存储的是类似二维地理信息系统中文本属性的信息。批次表
+Batch Table
+也能够存储诸如瓦片中要素个数一类的全局信息，也可存储相关的要素属性信息；只不过在存储其他要素属性时，由于批次表中存储的信息与应用相关，故而要指定二进制组件的基本类型以及组件容器数组的类型。由类型的比特位数即可计算出二进制体中属性数据所对应的数据段。
+
+B3DM 格式的属性表 Feature Table 存且仅存（）全局属性信息：而其批次表
+Batch Table 存储了该批文件中存储的模型要素个数 ``BATCH_LENGTH``
+和模型建立在局部坐标系中时坐标系原点的世界坐标 ``RTC_CENTER``\ 。
+
+.. _42-gltf-格式剖析:
+
+4.2 glTF 格式剖析
+~~~~~~~~~~~~~~~~~
+
+目前没有太大精力去剖析了，如果需要的话在下个月的记录文件里操作。
+
+.. _参考文献-3:
+
+参考文献
+~~~~~~~~
+
+1. CSDN博客.
+   `3dTile技术研究-概念详述(7) <https://blog.csdn.net/baidu_38621657/article/details/113822516>`__\ [EB/OL].
+
+2. CSDN博客.
+   `3dTile技术研究-概念详述(8) <https://blog.csdn.net/baidu_38621657/article/details/113829390>`__\ [EB/OL].
+
+3. CSDN博客.
+   `3dTile技术研究-概念详述(9) <https://blog.csdn.net/baidu_38621657/article/details/113821339>`__\ [EB/OL].
+
+4. GitHub. `Batched 3D
+   Model <https://github.com/CesiumGS/3d-tiles/tree/master/specification/TileFormats/Batched3DModel>`__\ [EB/OL].
+
+5. CSDN博客. `3DTile
+   的geometricError含义 <https://blog.csdn.net/Rsoftwaretest/article/details/106740269>`__\ [EB/OL].
+
+6. CSDN博客.
+   `3DTile中的geometricError和boundingVolume <https://blog.csdn.net/Rsoftwaretest/article/details/107580912>`__\ [EB/OL].
+
+7. Shehzan Mohammed. `3D Tiles
+   Overview <https://github.com/CesiumGS/3d-tiles/blob/master/3d-tiles-overview.pdf>`__\ [EB/OL].
+
+Q5、WebGIS 开发环境
+-------------------
+
+PostgreSQL+PostGIS 作为后端数据服务提供者，Tomcat
+作为后端调试服务器，Geoserver
+作为服务提供方进行服务打包并发布。这里参考\ `菜鸟教程 <https://www.runoob.com/postgresql/postgresql-tutorial.html>`__\ 介绍一下
+PostgreSQL 以及 PostGIS 的渊源。
+
+PostgreSQL 发源于加州大学伯克利分校计算机系 *Michael Stonebraker*
+教授领导的 POSTGRES 项目，该项目始创于 1986 年，并于 1994 年由 *Andrew
+Yu* 和 *Jolly Chen* 以 Postgres95 的名字发布于互联网，到 1996 年更名为
+PostgreSQL。POSTGRES 是对 Post INGRES 的缩写[21]， 名字中的 INGRES 是 70
+年代加州大学伯克利分校研究的早期数据库系统，全称为交互式图形和检索系统
+Interactive Graphics and Retrieval
+System，这是一套关系型数据库管理系统（Relational Database Management
+System，DBMS），在项目搁置后因计算机文件系统的更新等诸多原因无法接续，故而更名为
+POSTGRES 继承原有思想进行新世代的关系型数据库开发。
+
+PostGIS 是对象关系型数据库 PostgreSQL 的空间扩展，其开源项目由
+Refractions Research 公司启动，旨在建立一套开源的空间数据库技术。PostGIS
+通过向 PostgreSQL
+中添加对\ **空间数据类型**\ 、\ **空间索引**\ 和\ **空间函数**\ 等的支持，将
+PostgreSQL 数据库管理系统转换为\ **空间数据库**\ 。PostGIS 自动继承了
+PostgreSQL的"**企业级**"特性以及开放源代码的标准。PostGIS 作为
+PostgreSQL 的一个插件将PostgreSQL变成了一个强大的空间数据库。
+
+-  Linq2DB 是做什么用的；
+
+-  PostGIS 是怎么做查询分析的；
+
+-  如何开放 IIS 端口号；
+
+-  如何用 asp.net 发布空间查询服务；
+
+-  什么是 ContentType 以及怎样设置它；
+
+-  LINQ 与 C# 的反射机制及其应用场景；
+
+-  后缀名 .asmx 和 .asax 代表什么；
+
+-  由 PostgreSQL 表生成 C# 实体类。
+
+针对上面提出来的一些设想和知识点，展开后续研究，并将学习和开发工作完整的记录如下。
+
+.. _51-orm-of-postgresql:
+
+5.1 ORM of PostgreSQL
+~~~~~~~~~~~~~~~~~~~~~
+
+ORM，Object Relational
+Mapping，翻译为对象关系映射，用于实现面向对象编程语言里不同类型系统的数据之间的转换，实际上是通过实例对象的语法完成关系型数据库的操作的技术。针对应用程序的数据操作，直接编写原生
+SQL 语句会存在两方面的问题：
+
+1. **SQL 语句的执行效率**\ ：应用开发程序员需要耗费一大部分精力去优化
+   SQL 语句；
+
+2. **数据库迁移**\ ：针对 MySQL 开发的 SQL 语句无法直接应用到 Oracle
+   数据库上，一旦需要迁移数据库，便需要考虑跨平台问题。
+
+这两个问题出现的原因在于，面向对象是从软件工程基本原则（如耦合、聚合、封装）的基础上发展起来的，而关系数据库则是从数学理论发展而来的，两套理论存在显著的区别。对象关系映射技术正是为了解决这个不匹配的现象而存在的。目前的常见
+OMR 产品有 Entity Framework、Link to SQL、Active Record、OpenRecord
+等，在以上厚重的 OMR 之后又继续兴起了 Dapper、Massive、PetaPoco 等微 ORM
+产品，而目前在 C# 语言中应用最为广泛的是 LINQ 数据访问库 LINQ to
+DB，也即 Linq2DB。
+
+Linq2DB 与 T4 模板
+^^^^^^^^^^^^^^^^^^
+
+重量级实体框架 Entity Framework 包括三种类型：Data First、Model
+First、Code First；而相对于 EF 这种重量级的自动框架，Linq2DB 是取其 Data
+First 类型（从数据库到Mode）的轻量级半自动 ORM 框架，该类库目前仅支持 C#
+语言。
+
+T4 模版是 VS 自带的一个自定义工具，在 VS 中
+[新建]\ :math:`\rightarrow`\ [文本模版] 即可创建 \*.tt 或 \*.ttinclude
+格式的 T4 模板，该模版是在代码编译前的运行的，也就是说工程编译前就会运行
+T4 模版连接数据库并根据数据库的内部自动生成一个和数据库对应的实体类。
+
+若想在程序中使用 T4 模板，可以在引用上右键，点击 [管理 NuGet 包]，搜索
+Linq2DB.T4Template，从而在当前工程中添加模板库；模板库添加完成后的具体使用可以参考文献
+7。程序包提供的方法很简单：
+
+1. 从添加到工程的 LinqToDB.Templates 文件夹中复制符合工程要求的
+   CopyMe.PostgreSQL.tt.txt 到指定目录，并将文件名更改为自定义的
+   xxx.tt；
+
+2. 双击打开 xxx.tt 文件，更改其配置信息诸如 NamespaceName
+   命名空间、LoadPostgreSQLMetadata
+   函数设定数据库的链接字符串等等，其他配置信息可依据参考文献 7
+   对应更改；
+
+3. 右键 xxx.tt 文件，点击 “Run Custom Tool” 即可编译 T4
+   文件生成对应的实体类。
+
+但是在实际操作时遇到了 BUG，提示“无法找到
+System.Runtime.Com;ilerServices.Unsate”，这个问题其实是工程中没有添加对应包的
+NuGet
+引用或者程序使用的包的版本不正确所引起的，解决策略就是添加对应的引用包，并使用
+``gacutil`` 命令将工程引用位置的程序集 dll
+添加到工程缓存，重启后再次编译即可。
+
+.. code:: 
+
+   错误描述：System.IO.FileNotFoundException: Could not load file or assembly 'System.Runtime.CompilerServices.Unsafe, Version=4.0.4.1, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a' or one of its dependencies. 系统找不到指定的文件。
+   依赖版本：4.0.4.1-->4.5.3
+   修复命令：gacutil /i System.Runtime.CompilerServices.Unsafe.dll
+
+   错误描述: System.IO.FileNotFoundException: Could not load file or assembly 'System.Numerics.Vectors, Version=4.1.4.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a' or one of its dependencies. 系统找不到指定的文件。
+   依赖版本：4.1.4.0-->4.5.0
+   修复命令：gacutil /i System.Numerics.Vectors.dll
+
+EntitysCodeGenerate
+^^^^^^^^^^^^^^^^^^^
+
+从数据库中生成表对应的 VB/C# 实体代码，可实现数据库列和 VB/C#
+代码类型的映射、实体命名空间、代码个性化注释、是否生成对应的数据库操作等。同时通过实体可实现简单数据库添加、修改、删除、查询等操作，对添加和修改提供一个统一的保存操作（即实体会根据主键或实体条件值自动判断是更新还是插入）。
+
+该工具属于程序员自己实现的简易 OMR 数据实体转换工具，支持 Oracle、SQL
+Server、Access、MySQL、Sybase、SQLite、DB2、OleDb、PostgreSQL、DM（达梦）以及PowerDesigner
+等数据库。
+
+.. _52-postgis-空间查询:
+
+5.2 PostGIS 空间查询
+~~~~~~~~~~~~~~~~~~~~
+
+使用 Linq2DB 对 PostGIS 进行空间查询时需要在 C# 中为工程安装
+LinqToDBPostGisNTS 包，这个包是有适用性的所以目前不大能用了；C# 的
+Linq2DB 库本身已经涵盖了对 PostGIS 的扩展。空间查询可以参考 PostGIS
+数据库中的 SQL 语句和 LING to DB 中 PostGIS
+拓展的示例代码进行自定义化的功能定制。比如传入空间框选多边形的坐标，要求分类统计该区域覆盖的楼宇的属性信息时，可以参考如下代码片段：
+
+PostGIS SQL
+^^^^^^^^^^^
+
+.. code:: sql
+
+   SELECT ST_Union(ST_Clip(rast,geom)) AS rast
+   FROM staging.tmean_19
+   CROSS JOIN
+   ST_MakeEnvelope(3.87,73.67,53.55,135.05,4326) As geom
+   WHERE ST_Intersects(rast,geom) AND month=1;
+
+LinqToDBPostGisNTS 
+^^^^^^^^^^^^^^^^^^
+
+.. code:: c#
+
+   using LinqToDBPostGisNetTopologySuite
+   using (var db = new PostGisTestDataConnection()) {
+       NetTopologySuite.Geometries.Point point = new Point(
+           new Coordinate(1492853, 6895498)) { SRID = 3857 };
+       var dms = db.Select(() => GeometryOutput.STAsLatLonText(point));
+       var nearestCity = db.Cities
+           .OrderBy(c => c.Geometry.STDistance(point))
+           .FirstOrDefault();
+       var selected = db.Polygons
+           .Where(p => p.Geometry.STArea() > 150.0)
+           .OrderBy(p => p.Geometry.STDistance(point))
+           .ToList();
+       var stats = db.Polygons
+           .Select(c => new {
+                    Id = c.Id,
+                    Name = c.Name,
+                    Area = c.Geometry.STArea(),
+                    Distance = c.Geometry.STDistance(point),
+                    NumPoints = c.Geometry.STNPoints(),
+                    Srid = c.Geometry.STSrId(),
+                    Wkt = c.Geometry.STAsText(),
+                })
+           .ToList();
+   }
+
+Result
+^^^^^^
+
+根据上面两端代码，PostGIS 查询指定范围数据的 SQL 代码可以借助
+LinqToDBPostGisNTS 包来改造为 LING to DB 代码。即：
+
+.. code:: c#
+
+   using (var db = myContext.GetDBConnection()){
+       Coordinate2D[][] coords = rectangle(xmin, ymin, xmax, ymax);
+       PostgisPolygon polygon = new PostgisPolygon(coords);
+       var intersections = db.Buidings.Where(
+           p => p.Geom.StIntersects(polygon) // C# Lambda 表达式表达几何求交函数
+       ).ToList();
+   }
+
+Note SRID!
+^^^^^^^^^^
+
+当导入 PostgreSQL 数据库中矢量指定了 SRID 空间参考时，用
+``new PostgisPolygon`` 创建多边形时必须指定其空间坐标参考，否则会报错说
+Npgsql 语句错误。修改后的代码为：
+
+.. code:: c#
+
+   PostgisPolygon polygon = new PostgisPolygon(coords) {SRID = 32650 };
+
+那么这次这个问题是如何解决的呢？在 PostgreSQL 数据库中执行如下 SQL
+查询：
+
+.. code:: sql
+
+   SELECT * FROM public."DLGX"
+   WHERE ST_Intersects(
+       geom, ST_GeomFromText('Polygon(x1 y1, x2 y2, x3 y3, x4 y4, x1 y1)', 32650)
+   )/* x1 y1 等数为实际的 double 数而并非变量，这里是为了简化显示 */
+
+发现数据库成功找出了代码，所以猜测问题可能出现在这最后的数字 32650
+身上，经测试果然是。这里用到了一个很重要的 LING to DB 关于 PostGIS
+拓展的使用参考[9-10]，收纳到本章节的参考文献中。
+
+.. _53-c-日常:
+
+5.3 C# 日常
+~~~~~~~~~~~
+
+Web Service 返回 JSON
+^^^^^^^^^^^^^^^^^^^^^
+
+Web Service 也叫 XML Web Service，是一种轻量级的独立的 Internet
+通讯技术，通过 SOAP 在 Web 上提供软件服务，使用 WSDL
+进行文件说明，并通过 UDDI 进行注册。
+
+|  XML，Extensibale Markup Langage，拓展型可标记语言；
+|  SOAP，Simple Object Acess Protocal，简单对象存取协议；
+|  WSDL，Web Services Description Language，网络服务描述语言；
+|  UDDI，Universal Description Discovery and
+  Integration，通用描述、发现与集成服务。
+
+目前的网络服务中一般要求返回的对象都是 JSON 字符串，而 WebService
+默认返回的是 XML
+格式的数据，对于现在的工程来说显然不能满足需求，所以在返回 JSON
+字符串时，一般不会直接返回 string 类型，而是通过 Context
+来实现相关内容，如下：
+
+.. code:: c#
+
+   [WebMethod]
+   public void HelloWorld(){ 
+       string str= "Hello World"; 
+       Context.Response.Write(str);
+       Context.Response.End();
+   }
+   // Context.Response.Write(JsonConvert.SerializeObject(message)); 具有同等效果
+
+拓展名 \*.asmx 是 Web Service 服务程序的后缀名，\*.asmx 和 \*.aspx 都是
+ASP.NET 应用程序的文本文件。ASPX 文件是 ASP.NET 的动态页，而另外一个文件
+\*.asax 是全局文件，存储一些网络配置信息。
+
+Global.asax 文件被配置为任何直接 HTTP
+请求都被自动拒绝，所以用户不能下载或查看其内容。ASP.NET
+页面框架能够自动识别出对Global.asax 文件所做的任何更改。在 Global.asax
+被更改后ASP.NET
+页面框架会重新启动应用程序，包括关闭所有的浏览器会话，去除所有状态信息，并重新启动应用程序域。
+
+LINQ 与查询优化
+^^^^^^^^^^^^^^^
+
+LINQ 全称为 Language Integrated Query，译即\ **语言集成查询**\ ，该 API
+可以使用统一的方式编写各种查询，如 XML、对象集合、SQL Server
+数据库等；LINQ 是微软于 2007 年随 .NET Framework 3.5
+发布的技术，当前可支持 C# 以及Visual Basic .NET 语言。
+
+从语法风格上说，LINQ
+可以分为（a.）\ **SQL风格**\ 以及（b.）\ **函数风格**\ 两种，这两种风格实现的效果是相同的，只不过函数风格使用的函数是
+Lambda 表达式，如下面的两段代码：
+
+.. code:: c#
+
+   /* SQL 风格的 LINQ to Object 用法. */
+   var list = from user in users
+              where user.Name.Contains("Wang")
+              select user.Id;
+   /* 等同效果的函数风格代码. */
+   var list = users
+              .Where(u => u.Name.Contains("Wang"))
+              .Select(u => u.id);
+
+如下图所示，集合基于
+``ICollection``\ 、\ ``IList``\ 、\ ``IDictionary``\ 、\ ``IEnuerable``
+接口及其泛型版本，例如 ``IEnuerable<T>``\ ；集合都直接或间接的派生自
+``IEnumerable``\ 接口。
+
+LINQ 查询结果会根据 C# 的集合接口放到对应的集合中。LINQ
+的分组查询是非常具有代表性的一种查询机制，该查询通过两层循环来得到分组以及分组中的项，其示例代码如下：
+
+.. code:: c#
+
+   /* 分组查询的代码实例. */
+   var query = persons.Where(person => person.Name.Length > 2)
+               .Select(person => person.Name.ToLower())
+               .GroupBy(name => name.Substring(1, 1));
+   /* 通过两层循环得到分组查询结果. */
+   foreach(var g in query){
+       Console.WriteLine(g.Key);   // 外层循环得到分组
+       foreach(var item in g){
+           Console.WriteLine(item);// 内层循环得到分组中的项
+       }
+   }// 注意 PostGIS 拓展 St_Intersections 求交后要加一个 AsEnumerable() 函数转换为可操作的分组
+
+关于 LINQ
+的更多操作可参考相关文献[13-17]，这里不做进一步展开。下面讲一讲针对不同表、不同字段的查询优化思路；多表、多字段查询时，目前的考量是每个表和每个字段都写一段代码，原始表可能为：
+
+.. code:: c#
+
+   /* 数据表及其相关字段. */
+   [Table(Schema="public", Name="city_road")]
+   public partial class CityRoad {
+       [Column("gid"),         Nullable] public int      Gid       { get; set;}
+       [Column("shape_lengh"), Nullable] public decimal? ShapeLeng { get; set;}
+       [Column("name"),        Nullable] public string   Name      { get; set;}
+       [Column("status"),      Nullable] public string   Status    { get; set;}
+   }
+   [Table(Schema="public", Name="area_road")]
+   public partial class AreaRoad {
+       [Column("gid"),         Nullable] public int      Gid       { get; set;}
+       [Column("shape_lengh"), Nullable] public decimal? ShapeLeng { get; set;}
+       [Column("name"),        Nullable] public string   Name      { get; set;}
+       [Column("status"),      Nullable] public string   Status    { get; set;}
+   }
+
+   /* 数据库链接操作类. */
+   public class PostGISDataConnection : DataConnection
+   {
+       public PostGISDataConnection(string providerName, string connecString):
+       base(providerName, connecString){}
+       public ITable<CityRoad> City { get { return GetTable<CityRoad>(); }}
+       public ITable<AreaRoad> Area { get { return GetTable<AreaRoad>(); }}
+   }
+
+   /* 执行数据库链接的操作. */
+   public class DataContext
+   {
+       public PostGISDataConnection GetConnection(){
+           var str = ConfigurationManager.ConnectionStrings("postgistest");
+           return new PostGisDataConnection(str.ProviderName, str.ConnectionString)
+       }
+   }
+
+对于这两个表来说，用它进行查询可能需要执行的操作为：
+
+.. code:: c#
+
+   DataContext context = new DataContext();
+   using(var db = context.GetConnection()){
+       if(table.Equals("市级路网")){
+           var sects = db.City.Where(p=>p.Geom.STIntersetions(polygon)).AsEnumerable();
+           if (field.Equals("路名")){
+               var groups = sects.GroupBy(g => g.Name);
+               foreach(var item in groups){
+                   string key = item.Key;
+                   double length = Convert.ToDouble(item.Sum(t => t.ShapeLength));
+               }
+           }
+           if (field.Equals("使用状态")){
+               var groups = sects.GroupBy(g => g.Status);
+               foreach(var item in groups){
+                   string key = item.Key;
+                   double length = Convert.ToDouble(item.Sum(t => t.ShapeLength));
+               }
+           }
+       }
+       if(table.Equals("城区路网")){
+           var sects = db.Area.Where(p=>p.Geom.STIntersetions(polygon)).AsEnumerable();
+           if (field.Equals("路名")){
+               var groups = sects.GroupBy(g => g.Name);
+               foreach(var item in groups){
+                   string key = item.Key;
+                   double length = Convert.ToDouble(item.Sum(t => t.ShapeLength));
+               }
+           }
+           if (field.Equals("使用状态")){
+               var groups = sects.GroupBy(g => g.Status);
+               foreach(var item in groups){
+                   string key = item.Key;
+                   double length = Convert.ToDouble(item.Sum(t => t.ShapeLength));
+               }
+           }
+       }    
+   }
+
+显而易见，这个东西很复杂。为了进一步优化查询语句，本来设想通过 C#
+的反射机制来使用，但显然反射并不能得到对象实例。我们需要综合使用 C#
+语言的继承来优化以上重复代码的使用。
+
+首先，为所有的数据表添加一个公共的父类。所有的数据表都继承自该父类，那么在进行查询时就可以将所有的表都用父类来表示，而被传递的表本身具有子类的实例。
+
+.. code:: c#
+
+   /* 父类表. */
+   public class ParentTable{
+       /* 定义需要查询的公共属性. */
+       private string[] Fields = new string[2]{
+           "1,name,路名",
+           "2,status,使用状态"
+       };
+       /* 根据字符串获取相应的属性. */
+       private int getFieldID(string field){
+           for (int i = 0; i < Fields.GetLength(0); i++){
+               string[] info = Fields[i].Split(',');
+               if (field.Equals(info[1], StringComparison.OrdinalIgnoreCase) ||
+                   field.Equals(info[2])){
+                   return Convert.ToInt16(info[0]);
+               }
+           }
+       }
+   }
+   /* 子类表. */
+   public partial class CityRoad : ParentTable {}
+   public partial class AreaRoad : ParentTable {}
+
+那么可以将 DataConnection 类重新改写为：
+
+.. code:: c#
+
+   /* 数据库链接操作类. */
+   public class PostGISDataConnection : DataConnection
+   {
+       public PostGISDataConnection(string providerName, string connecString):
+       base(providerName, connecString){}
+       
+       /* 定义数据表. */
+       private string[] TableNames = new string[2]{
+           "1,City,市级路网",
+           "2,Area,城区路网"
+       };
+       /* 根据字符串获取相应的数据表. */
+       private int getTableID(string table){
+           for (int i = 0; i < TableNames.GetLength(0); i++){
+               string[] info = TableNames[i].Split(',');
+               if (table.Equals(info[1], StringComparison.OrdinalIgnoreCase) ||
+                   table.Equals(info[2])){
+                   return Convert.ToInt16(info[0]);
+               }
+           }
+       }
+       /* 获取数据表. */
+       public findTableByName(string table){
+           switch(getTableID(table)){
+               case 1 : return City;
+               case 2 : return Area;
+               default: return null;
+           }
+       }
+       /* 声明市级、城区路网. */
+       public ITable<CityRoad> City { get { return GetTable<CityRoad>(); }}
+       public ITable<AreaRoad> Area { get { return GetTable<AreaRoad>(); }}
+   }
+
+这里命名一条 Object 公理： **C# 中所有的对象都可以看做是
+Object**\ 。这条公理是改进 LINQ
+查询的前提条件。改进后可以将查询代码写成如下形式：
+
+.. code:: c#
+
+   DataContext context = new DataContext();
+   using(var db = context.GetConnection()){   
+       var sects = db.findTableByName(table).
+           Where(p=>p.Geom.STIntersetions(polygon)).AsEnumerable();
+       var groups = sects.GroupBy(g => g.getFieldByName(field));
+       foreach(var item in groups){
+           string key = item.Key;
+           double length = Convert.ToDouble(item.Sum(t => t.ShapeLength));
+       }    
+   }
+
+C# 反射
+^^^^^^^
+
+C#
+中的反射可以实现从对象的外部来了解对象（或程序集）内部结构的功能，哪怕不知道这个对象（或程序集）是什么，另外
+.NET 中的反射还可以动态创建出对象并执行它其中的方法。反射是 .NET
+中重要的机制，通过反射，可以在运行时获得程序或程序集中每一个类型（包括类、结构、委托、接口和枚举等）的成员和成员的信息。另外还可以直接创建对象，即使这个对象的类型在编译时还不知道。反射的用途如下：
+
+1. 使用 Assembly
+   定义和加载程序集，以及从此程序集中查找类型并创建该类型的实例。
+
+2. 使用 Module
+   了解包含模块的程序集以及模块中的类等，还可获取在模块上定义的所有全局方法。
+
+3. 使用 ConstructorInfo
+   了解构造函数的名称、参数、访问修饰符和实现详细信息等。
+
+4. 使用 MethodInfo
+   了解方法的名称、返回类型、参数、访问修饰符和实现详细信息等。
+
+5. 使用 FiedInfo
+   了解字段的名称、访问修饰符和实现详细信息（如static）等，并获取或设置字段值。
+
+6. 使用 EventInfo
+   了解事件的名称、自定义属性、声明类型和反射类型等，添加或移除事件处理程序。
+
+7. 使用 PropertyInfo
+   了解属性的名称、数据类型、声明类型、反射类型和只读状态等，获取或设置属性值。
+
+8. 使用 ParameterInfo
+   了解参数的名称、数据类型、是输入参数还是输出参数等。
+
+以上内容可以参考相关文献[19]。
+
+开放 IIS 端口
+^^^^^^^^^^^^^
+
+内网服务器如果要建立两个以上的网站，可给每个站指定不同的端口，用同一个IP，一般本机测试正常，而其他电脑无法打开，原因是
+Windows 默认没有开放相应端口。开放相应端口的设置如下：
+
+1. 开始 :math:`\rightarrow` 控制面板 :math:`\rightarrow` Windows
+   防火墙；
+
+2. 高级设置 :math:`\rightarrow` 弹出窗口左边栏 :math:`\rightarrow`
+   入站规则；
+
+3. 弹出界面的右边栏 :math:`\rightarrow` 新建规则；
+
+4. 在弹出的窗口依次选择：端口 :math:`\rightarrow` TCP以及特定本地端口
+   :math:`\rightarrow` 填入要开放的端口号 :math:`\rightarrow`
+   选中允许连接 :math:`\rightarrow` 选中所有选项 :math:`\rightarrow`
+   填入端口链接标识 :math:`\rightarrow` 完成。
+
+通过以上操作即可在局域网中开放相应的端口。
+
+Content Type
+^^^^^^^^^^^^
+
+Content-Type 即 Internet Media Type，译为互联网媒体类型，也叫做
+MIME（Multipurpose Internet Mail Extensions）
+类型。在互联网中有成百上千中不同的数据类型，HTTP在传输数据对象时会为他们打上称为
+MIME的数据格式标签，用于区分数据类型。最初 MIME
+是用于电子邮件系统的，后来 HTTP 也采用了这一方案。
+
+在 HTTP 协议消息头中，使用 Content-Type
+来表示请求和响应中的媒体类型信息。它用来告诉服务端如何处理请求的数据，以及告诉客户端（一般是浏览器）如何解析响应的数据，比如显示图片，解析并展示
+HTML 等等。Content-Type 的格式如下：
+
+``Content-Type：type/subtype;parameter``
+
+说明如下：
+
+1. | ``type``\ ：主类型，任意的字符串，如 text，如果是 \* 号代表所有；
+   | ``subtype``\ ：子类型，任意的字符串，如 html，如果是 \*
+     号代表所有，用“/”与主类型隔开；
+   | ``parameter``\ ：可选参数，如 charset，boundary 等。
+
+2. | 例如：
+   | ``Content-Type: text/html;``
+   | ``Content-Type: application/json;charset:utf-8;``
+
+特殊的 Content Type 如 ``application/x-www-form-urlencoded`` 会将参数以
+``key1=val1&key2=val2`` 的方式由 HTTP
+进行组织并放到请求实体里。注意如果是中文或特殊字符如“\ ``/``\ ”、“\ ``,``\ ”、“\ ``:``\ ”等会自动进行
+URL 转码。该类型不支持文件，一般用于表单提交。
+
+.. _参考文献-4:
+
+参考文献
+~~~~~~~~
+
+1.  CSDN博客. `PostgreSQL
+    代码生成工具选择 <https://blog.csdn.net/doris_d/article/details/46802867>`__\ [EB/OL].
+
+2.  百度百科.
+    `对象关系映射 <https://baike.baidu.com/item/%E5%AF%B9%E8%B1%A1%E5%85%B3%E7%B3%BB%E6%98%A0%E5%B0%84>`__\ [EB/OL].
+
+3.  阮一峰. `ORM
+    实例教程 <http://www.ruanyifeng.com/blog/2019/02/orm-tutorial.html>`__\ [EB/OL].
+
+4.  开源博客.
+    `实体对象辨析(POCO、Entity、Model、DTO、BO、DO、PO) <https://my.oschina.net/gAKey/blog/1647727>`__\ [EB/OL].
+
+5.  CSDN博客.
+    `linq2db与T4模版 <https://blog.csdn.net/Backspace110/article/details/86734017>`__\ [EB/OL].
+
+6.  简书. `基于PostGIS的高级应用（4）--
+    空间查询 <https://www.jianshu.com/p/2e365b5e0fb9>`__\ [EB/OL].
+
+7.  LINQtoDB. `T4
+    Models <https://linq2db.github.io/articles/T4.html>`__\ [EB/OL].
+
+8.  CSDN博客. `PostGIS
+    查询指定范围的数据 <https://blog.csdn.net/theonegis/article/details/55211846>`__\ [EB/OL].
+
+9.  Github. `Linq2db PostGIS
+    Extensions <https://github.com/apdevelop/linq2db-postgis-extensions>`__\ [EB/OL].
+
+10. Npgsql. `Spatial Mapping with
+    NetTopologySuite <https://www.npgsql.org/efcore/mapping/nts.html>`__\ [EB/OL].
+
+11. CSDN博客.
+    `WebService返回文本JSON数据格式 <https://blog.csdn.net/milijiangjun/article/details/80618169>`__\ [EB/OL].
+
+12. CSDN博客.
+    `C#中使用反射将字符串转换为类 <https://blog.csdn.net/l17768346260/article/details/104139577>`__\ [EB/OL].
+
+13. 知乎. `[C#.NET
+    拾遗补漏]08：强大的LINQ <https://zhuanlan.zhihu.com/p/263408354>`__\ [EB/OL].
+
+14. CSDN博客. `LINQ to
+    SQL语句 <https://blog.csdn.net/weixin_30379973/article/details/95834540>`__\ [EB/OL].
+
+15. CSDN博客.
+    `LINQ语句 <https://blog.csdn.net/zmh458/article/details/78935181>`__\ [EB/OL].
+
+16. 百度文库.
+    `Lambda表达式与LINQ <https://wenku.baidu.com/view/1bce986ec8d376eeafaa318b.html?fr=search-income2&fixfr=84pnCOU0yQnjE3m3m6yhHg%3D%3D>`__\ [EB/OL].
+
+17. 知乎.
+    `LINQ，从IQueryable说起 <https://zhuanlan.zhihu.com/p/47776558>`__\ [EB/OL].
+
+18. CSDN博客.\ `Windows server
+    2008系统，IIS7.0设置开放端口 <https://blog.csdn.net/zhaohongx/article/details/37722333>`__\ [EB/OL].
+
+19. 博客园.\ `详解C#中的反射 <https://www.cnblogs.com/Stephenchao/p/4481995.html>`__\ [EB/OL].
+
+20. 简书. `Content-Type
+    详解 <https://www.jianshu.com/p/de5845b4c095>`__\ [EB/OL].
+
+21. M. Stonebraker and L. Rowe. “\ `The design of
+    POSTGRES <http://db.cs.berkeley.edu/papers/ERL-M85-95.pdf>`__\ ”.[J]
+    ACM-SIGMOD Conference on Management of Data, May 1986.

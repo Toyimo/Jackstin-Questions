@@ -1,0 +1,223 @@
+Question List in February, 2021
+===============================
+
+🏮 The Spring Festival of China will coming soon, cow will be there.
+
+公元796年，四十六岁的孟郊顶着花白的头发去了长安，中了进士，韩愈为其写的墓志铭中说：“年几五十，始以尊夫人之命，来集京师，从进士试。即得，即去”。得了进士，他回了家，写了这样一首诗。“昔日龌龊不足夸，今朝放荡思无涯。春风得意马蹄疾，一日看尽长安花。”
+
+Q1、RangeMode 转换算法
+----------------------
+
+.. _11-固有转换算法:
+
+1.1 固有转换算法
+~~~~~~~~~~~~~~~~
+
+在 OSG 的 PagedLOD 节点设置中，有 PIXEL_SIZE_ON_SCREEN 和
+DISTANCE_FROM_EYE_POINT 两种控制细节层次节点的方式。取
+:math:`\mathrm{fovy}` 为 :math:`y` 方向上的视场角，也即 field of view in
+:math:`y` 的缩写；取 :math:`H` 为显示在屏幕上的视口的高度；取
+:math:`\alpha`
+为物体包围盒范围在当前视口中所占据的角度，则其在数值上等于相机观察点距离物体中心的距离
+:math:`l` 与物体包围盒半径之比 :math:`r` 的反正切的二倍；一般取
+:math:`\mathrm{fovy}=30°,(H,W)=(1080,1980)`\ 。有根据距视点的距离
+:math:`l` 计算在屏幕中的像素大小 :math:`p` 的方式如下：
+
+.. math:: p=\frac{2H}{\mathrm{fovy}}\cdot\arctan\frac{r}{l}=C\cdot\arctan x
+
+.. _12-公式推导:
+
+1.2 公式推导
+~~~~~~~~~~~~
+
+参考文献 1 中提到了一种在 :math:`x\in[-,1]=U` 区间简化 :math:`\arctan x`
+计算的近似公式：
+
+.. math:: f(x)=\arctan x\approx\frac{x}{1+0.28125\cdot x^2}
+
+在本文的应用实例中，视点距离 :math:`l` 是一个大于包围盒半径 :math:`r`
+的数，故有
+:math:`x\in[0,1]=U'`\ ，\ :math:`U'\subset U`\ ，故而可以应用上面的近似公式来近似表达像素
+:math:`p` 的计算。现在要求是已知 :math:`p_0,r_0,l_0`\ ，要根据需要的
+:math:`l'` 求得需要的 :math:`p'`\ ，令：
+
+.. math:: A=\frac{1}{f(x)}+\frac{1-k^2}{k^2x}
+
+则有 :math:`f(kx)\approx k/A`\ ，对于 :math:`p` 的计算公式而言，令
+:math:`x_0=r_0/l_0` 则有：
+
+.. math:: p'=k\cdot\left(\frac{1}{p_0}+\frac{1-k^2}{C\cdot k^2\cdot x_0}\right)^{-1}
+
+假设想要将原来视点距离 :math:`l` 由 120000 调整为 15000，则
+:math:`l'=0.125\cdot l`\ ，\ :math:`k=1/0.125=8`\ 。由此公式即可得到相应的距离转化比
+:math:`p'` 的值了。当然对于本文所使用的程序而言，应该使用 :math:`p’/p`
+的值作为调整因子。
+
+问题转化：已知 :math:`f(x)=\Large\frac{x}{1+x^2}`\ ，求
+:math:`f(k\cdot x)=` **\_\_**\ **\_\_**\ **\_\_** :math:`f(x)`\ ，其中
+:math:`k\in\mathbb{R}` 且
+:math:`k\neq0`\ 。这个问题可以利用高中知识进行简单解决，即：
+
+:math:`\mathrm{We\ know\ that\ }f(x)={\Large\frac{x}{1+x^2}}\ \mathrm{and}\ f(kx)={\Large\frac{kx}{1+k^2x^2}},\ \mathrm{let\ } f(kx)=mf(x),\ \mathrm{we\ have:}`
+
+.. math:: \frac{kx}{1+k^2x^2}=\frac{mx}{1+x^2}
+
+:math:`\mathrm{so,\ we\ got:\ }`
+
+.. math:: m=\frac{k(1+x^2)}{1+k^2x^2}
+
+:math:`\mathrm{then\ }`
+
+.. math:: f(kx)=\frac{k(1+x^2)}{1+k^2x^2}f(x).
+
+.. _13-结论:
+
+1.3 结论
+~~~~~~~~
+
+由此，可以得到
+:math:`f(k\cdot x)=k(1+x^2)/(1+k^2x^2)\cdot f(x)`\ 。所以由此看来，并不能通过公式推导来将
+:math:`x` 变量摘除出去，所以就只能先这样了吧。\ **整这么费劲还不如直接求
+:math:`l` 然后重新计算。**
+
+.. _参考文献-1:
+
+参考文献
+~~~~~~~~
+
+1. Ukil, Abhisek & Shah, Vishal & Deck, Bernhard. (2011). Fast
+   computation of arctangent functions for embedded applications: A
+   comparative analysis. 10.1109/ISIE.2011.5984330.
+
+Q2、日常C++积累
+---------------
+
+.. _21-文件读写:
+
+2.1 文件读写
+~~~~~~~~~~~~
+
+C++标准类库中的 ofstream, ifstream 和 fstream 类是分别从ostream, istream
+和iostream 中引申而来的。这就是为什么 fstream
+的对象可以使用其父类的成员来访问数据。
+
+暂时先放这儿，有空加深一下记忆，不然每次都要百度。
+
+.. _22-静态链接库与动态链接库:
+
+2.2 静态链接库与动态链接库
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+其中的 MAKEDLL_EXPORTS 宏应该在 [**项目右键**] → [**属性**] →
+[**配置属性**] → [**C/C++**] → [**命令行**] → [**其他选项**]
+中添加定义，正如注释中所说：
+
+.. code:: c++
+
+   // 下列 ifdef 块是创建使从 DLL 导出更简单的
+   // 宏的标准方法。此 DLL 中的所有文件都是用命令行上定义的 MAKEDLL_EXPORTS
+   // 符号编译的。在使用此 DLL 的
+   // 任何其他项目上不应定义此符号。这样，源文件中包含此文件的任何其他项目都会将
+   // MAKEDLL_API 函数视为是从 DLL 导入的，而此 DLL 则将用此宏定义的
+   #ifdef MAKEDLL_EXPORTS
+   #define MAKEDLL_API __declspec(dllexport)
+   #else
+   #define MAKEDLL_API __declspec(dllimport)
+   #endif
+
+而添加的定义如下：
+
+.. code:: makefile
+
+   /D "MAKEDLL_EXPORTS" 
+
+.. _参考文献-2:
+
+参考文献
+~~~~~~~~
+
+1. CSDN博客.\ `C++文件读写详解 <https://blog.csdn.net/kingstar158/article/details/6859379>`__\ [EB/OL].
+
+2. 博客园.\ `VS2013生成、使用dll，lib文件 <https://www.cnblogs.com/qinguoyi/p/7257353.html>`__\ [EB/OL].
+
+Q3、矢量功能模块收尾
+--------------------
+
+.. _31-多对多矢量模型树链解除算法:
+
+3.1 多对多矢量模型树链解除算法
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+设计思路已写在纸上，有空填进来。算法示意图如下图所示。
+
+.. _32-解除算法的调用时机:
+
+3.2 解除算法的调用时机
+~~~~~~~~~~~~~~~~~~~~~~
+
+既然问题出在静态成员变量身上，那么不如将树链解除算法的函数也声明为静态函数，什么时候需要调用了，直接传入当前场景的根节点
+root 使用类的静态函数直接解除链接并清空内存。
+
+Q4、能源集团全景功能
+--------------------
+
+经过两个星期的努力，能源集团全景功能的添加业已基本完成，但系统的标注可能还需要一点点助力和完善；首先改进标注的间隙，在其上添加几个分区标注来改善这密密麻麻的标注。
+
+如上图所示稍微改进一下喽。中心城区暂时不用太动，添加北辰、红桥、河东、西青、河西五个中层标注信息。
+
+Q5、ArcPy 精度问题
+------------------
+
+.. _copyfeaturesmanagement-精度问题:
+
+CopyFeatures_management 精度问题
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+在利用 arcpy.CopyFeatures_management 函数将创建的点要素转换为 shape
+文件时遇到了如下问题。
+
+如上图所示，蓝绿色点为正确点位，红色点为生成点位。生成点位的精度被取舍到
+0.0001 位，从而导致生成的 shape
+文件完全无法正常应用。为了解决这一问题，需要改变一下生成策略。
+
+.. code:: python
+
+   # -- coding: utf-8 --
+
+   import os
+   import arcpy
+   import pandas
+
+   # Get and set the parameters
+   csv = 'C:\\Users\\Administrator\\Desktop\\pgr2gps\\anjialu.txt'  # CSV File
+   folder = 'C:\\Users\\Administrator\\Desktop\\output\\'    # Folder path
+   # shp_line = folder + '\\polyline.shp'
+   name = "point.shp"
+   shp_point = folder + '\\' + name
+
+   # Create Shape file
+   spatRef = arcpy.SpatialReference(4326)
+   arcpy.CreateFeatureclass_management(folder, name, 'POINT', '', '', '', spatRef)
+   arcpy.AddField_management(shp_point, 'FRAME', 'TEXT', field_length=50)
+   arcpy.AddField_management(shp_point, 'FrameIndex', 'TEXT', field_length=50)
+   fields = ['FRAME', 'FrameIndex', 'SHAPE@XY']
+
+   # Read the points from csv table
+   print('>> Program start.')
+   data = pandas.read_csv(csv)
+
+   # Insert data
+   cursor = arcpy.da.InsertCursor(shp_point, fields)
+   point_data = data[[' LON', ' LAT', 'FRAME', ' FrameIndex']]
+   for row, value in point_data.iterrows():
+       x = float(value[' LON'])
+       y = float(value[' LAT'])
+       frame = value['FRAME']
+       frame_index = value[' FrameIndex']
+       new_row = [frame, frame_index, (x, y)]
+       cursor.insertRow(new_row)
+   del cursor
+
+目前发现的两个要点：第一，需要指定投影坐标；第二，生成时不能用
+CopyFeatures_management 函数，而应使用 CreateFeatureclass_management
+创建 SHP 文件并用 arcpy.da.InsertCursor 来添加数据。

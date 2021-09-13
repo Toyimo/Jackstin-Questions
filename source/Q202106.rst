@@ -1,0 +1,804 @@
+Question List in June, 2021
+===========================
+
+👶 We love our country, but some people Verräter der Arbeiterklasse,
+Verpfeif dich!
+
+千万年的时光一晃而过，宇宙消亡而后重生，群星变成了星云，星云变成了群星，而伦道夫·卡特仍旧感觉自己正在穿过那由有知觉的黑暗所组成的无尽虚空。接着在永恒缓慢前进的道路上，宇宙最外层的循环翻滚搅成了另一种完全无意义的完结，然后所有一切事物又再度变得与无数劫之前一样。事物与光芒均重生成为宇宙过去曾有过的模样；无数彗星、无数太阳、无数世界热烈地涌现出生命，但却没有什么能够活下来告诉他们，这一切来了又走，来了又走，反反复复，没有起点。
+
+.. raw:: html
+
+   <html xmlns="http://www.w3.org/1999/xhtml"><head></head><body><div align="right">——H.P.Lovecraft《梦寻秘境卡达斯》</div></body></html>
+
+Q1、OSGB2CESIUM 程序开发
+------------------------
+
+.. _11-碎片化-bug-分析:
+
+1.1 碎片化 BUG 分析
+~~~~~~~~~~~~~~~~~~~
+
+通过 osgb2osg 转换数据文件为明码 osg 格式进行分析，以及通过 osgviewer
+快捷键 [**b**] 剔除背面绘制与转换后三维模型在 CesiumLab
+中显示时的对比发现：碎片化问题的原因是人工生成的模型法向量不正确从而导致模型绘制时背面瓦片被意外剔除。为了解决这个问题，首先需要来讨论一下背面剔除技术。
+
+在 EarthSDK 中开启/关闭背面绘制可以通过 ``getRenderState()``
+的第二个参数来设置，即：
+
+   .. code:: javascript
+
+      xxx.renderState = XE.Obj.CustomPrimitive.getRenderState(false, false);
+
+   函数原型是 ``getRenderState(translucent, closed)``\ ：形参 ``closed``
+   为 ``true`` 时不显示背面，为 ``false``
+   时关闭背面剔除，进而显示背面。这也解释了为啥 CesiumLab
+   显示的时候直接碎片化了。
+
+分析一下源码，osgviewer 中键盘 [**b**] 的响应事件是在
+StateSetManipulator 中响应的，其事件响应被定义为整形变量
+``_keyEventToggleBackfaceCulling``\ ，进一步地，该事件响应通过
+``setBackfaceEnabled()`` 函数调用状态集合 StateSet 中的 ``setMode()``
+函数来执行 OpenGL 裁剪操作，即：
+
+.. code:: c++
+
+   setMode(GL_CULL_FACE, osg::StateAttribute::ON);
+   setMode(GL_CULL_FACE, osg::StateAttribute::OVERRIDE|osg::StateAttribute::OFF);
+
+这样即可找到下一个关键词，\ ``GL_CULL_FACE``\ 。在 OpenGL
+中存在这样两种函数[2]：
+
+|  **1).** ``glEnable(GL_CULL_FACE)`` 开启剔除操作效果；
+|  **2).** ``glDisable(GL_CULL_FACE)`` 关闭剔除操作效果。
+
+而所谓的剔除操作进一步可由 ``glCullFace()`` 函数通过两个参数
+``GL_FRONT`` 和 ``GL_BACK``
+来禁用多边形正面或背面的光照、阴影和颜色计算及操作，消除不必要的渲染计算。如某对象无论如何位置变化都只能看到构成其组成的多边形的某一面时，便可使用该函数。需要注意的是：
+
+   **OpenGL3.1** 多边形只接受 GL_FRONT_AND_BACK 作为 Face
+   的值，其正面和背面均以相同的方式渲染。
+
+关于剔除操作和正面背面的问题请参考 1.3 节的相关内容。
+
+.. _12-iis-发布-3dtiles-服务:
+
+1.2 IIS 发布 3DTiles 服务
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+1. | No 'Access-Control-Allow-Origin' header is present on the requested
+     resource
+   | 解决跨域问题包含两个要点：
+   | **1)** MIME 类型添加：\ ``.b3dm`` 文件扩展名的 MIME 类型为
+     ``application/octet-stream``\ ；
+   | **2)** HTTP 响应标头添加：
+
+   .. code:: json
+
+      "Access-Control-Allow-Headers" : Content-Type,X-Requested-With,token
+      "Access-Control-Allow-Methods" : GET, POST, PUT, DELETE, OPTIONS
+      "Access-Control-Allow-Origin" : *
+      "Access-Control-Request-Methods" : GET, POST, PUT, DELETE, OPTIONS
+
+2. | 解决 URL 路径中含有诸如 ``+`` 等特殊字符时无法转义的问题：
+   | 点开 IIS 的 [请求筛选] 选项，找到 ``.browser`` 并 [编辑功能设置]
+     勾选 [允许双重转义] 即可。
+
+.. _13-剔除背面:
+
+1.3 剔除背面
+~~~~~~~~~~~~
+
+本章节又名《论计算机图形学中所指的三维物体的正面和背面》，三维世界中的观察者所观察到的平面二维物体都有两侧，每一侧要么面向观察者，要么背对观察者，当其即面向观察又背对观察者时就会使其降低为一维生物而失去其二维特性。将平面弯曲起来，使得其中一边贴合另外一边形成管子状物体，如下：
+
+这样一来针对观察者来说就有了\ **正面**\ 和\ **背面**\ 这样一对相对的概念。下面想想一个六面的立方体，无论观察者怎样旋转这个立方体都只有三个面能被观察到，另外三个面将始终处于观察者观察不到的状态；需要注意的是，这种状态与遮挡不同，遮挡是物体和物体之间的关系，而本章节所说的状态是针对同一物体而言的。
+
+在计算机图形学中，这样一种处于观察者观察不到状态的平面完全可以在渲染管线中不予以处理和绘制，这就是剔除背面这一技术的核心思路。甜甜圈例子中，背面剔除可以解决视角调整时甜甜圈的绘制意外漏出背面的问题[3]。在通过数学语言定义正面和背面时，OpenGL
+是这样做的：
+
+   在定义一组图元时，OpenGL 以特定的顶点环绕顺序来区分它们的正面和背面：
+
+   | **逆时针**\ 定义的三角形顶点序列构成\ **正向三角形**\ ，Count-Clockwise；
+   | **顺时针**\ 定义的三角形顶点序列构成\ **背向三角形**\ ，Clockwise。
+
+将前面所说的六面立方体与正背向三角形结合在一起可以绘制如下图所示的示意图；这里的两个三角形在正方体表面上的顶点组织顺序都是正向的，只不过从观察者视角看过去时，正对观察者这个面的三角形组织成逆时针正向三角形，而背对观察者的面，在视线穿过时形成了顺时针背向三角形；由此实现对正方体另三个面的消隐。
+
+OpenGL 代码中的设定是由 ``glFrontFace(GL_CCW)``
+所实现的，为了与右手法则定义的法线保持一致，通常会默认指定 ``GL_CCW``
+逆时针为正面，当然也可自定义指定正面绘制方式，如设置
+``glFrontFace(GL_CW)``
+即可指定顺时针为正面；要注意不同图元类型的定义，例如
+``GL_TRIANGLE_STRIP`` 的缠绕顺序就是通过自动交错来定义的。
+
+那么现在问题就已经很明显了，应该是出在由用户自定义组织顶点链接顺序时某些顶点没有组织好，从而形成了如下图所示的从正向和背向看都是破碎表面的效果。
+
+针对这一问题，本文找到了 2020 年 11 月设计的顶点索引重构方法：
+
+单从策略上来看似乎没什么问题，但重点在于这个顶点索引重构方式采用的是
+GL_TRIANGLE
+的方式来组织内部顶点的，也就是说，要自己去实现这个顶点的内部翻转。上面的组织方式是一种交错式的内部顶点组织方式，所以需要修改的地方就是自己实现顶点的内部翻转。有两种策略，一是源重构方法不变，在利用：
+
+.. code:: c++
+
+   osg::ref_ptr<osg::DrawElementsUInt> triangles = new osg::DrawElementsUInt(osg::PrimitiveSet::TRIANGLES);
+   for (int i = 0; i < numf; i++){
+   	triangles->push_back(_qslim_mesh->facelist[i].vertexid[0]);
+   	triangles->push_back(_qslim_mesh->facelist[i].vertexid[1]);
+   	triangles->push_back(_qslim_mesh->facelist[i].vertexid[2]);
+   }
+   mesh_geom->addPrimitiveSet(triangles.get());
+
+构建三角形时，判断奇偶，对偶数三角形执行一个翻转。另外一种策略就是修改原始算法，在下仔细斟酌了一下，还是怎么简单怎么来吧哈哈哈哈哈。呜呜呜，简单的通过奇偶判断很容易出问题，特别是在换行的时候，因为不知道下一个单元的情况，所以很容易计算出错。
+
+找了半天，原来当初设计的 VertexMap 是在 osgTerrain 中使用的。在
+osgTerrain.cpp 第 318 行，修改 2
+号三角形的顶点组织方式为逆时针即可解决该问题。
+
+.. _14-层级及视距调整:
+
+1.4 层级及视距调整
+~~~~~~~~~~~~~~~~~~
+
+**2021-06-09 16:37** 记录一下 PP 工具目前的一个重大
+BUG，生成实景模型顶层金字塔时，面对不同情况生成的金字塔层级文件存在无法对应的情况。为了解决这一问题，特决定近期花些时间梳理相关算法和代码。
+
+**2021-06-09 16:44**
+与此同时，发现生成顶层金字塔时的模型缺失错误的报错提示有点烦人，看看如何调整一下。
+
+实景模型顶层金字塔的 RangeList
+问题是因为第一个文件的半径不对，添加一个循环读取函数，使得程序读到正确的半径时才能执行后续的相关计算。
+
+.. _15-投影坐标转经纬度坐标:
+
+1.5 投影坐标转经纬度坐标
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+特指将 CGCS2000 投影坐标转换为 WGS84
+大地经纬度坐标。转换方法有两种策略，其一，自主计算一个简易版的坐标转换程序；其二，使用
+GDAL 库来实现经纬度坐标换算。
+
+津政函〔2018〕153号《天津市人民政府关于同意建立2000天津城市坐标系的批复》文件中，天津市政府同意建立并实施2000天津城市坐标系（即以117°18′07″为中央子午线，采用高斯-克吕格投影于2000国家大地坐标系参考椭球面的城市平面坐标系），认定2000天津城市坐标系为本市区域内唯一的相对独立的平面坐标系统。
+
+WKT 和 EPSG
+^^^^^^^^^^^
+
+Well-Know
+Text，WKT，是一种用于表示矢量几何对象、空间参照系统及空间参照系统之间的转换。它的二进制表示方式
+WKB 可以维护数据库数据的传输，该格式由开放地理空间联盟 OGC 制定。在使用
+metadata.xml 文件时可能会含有自定义的 WKT
+字符串作为相应的倾斜摄影模型的自定义空间参考，WKT 字符串以及 EPSG
+坐标系统是两种不同的坐标定义方式，需要根据坐标指定类型对应定义空间参考。
+
+The European Petroleum Survey
+Group，EPSG，是维护空间参照对象数据集的组织，OGC
+标准中空间参照系统的SRID（Spatial Reference System
+Identifier）与EPSG的空间参照系统 ID
+相一致。这里需要注意一下，在倾斜摄影系统中所使用的坐标系代号指示串：\ ``EPSG:4548+5737``
+分别标识了 4548 国家 CGCS2000 3 度带投影坐标系和黄海 1985 高程坐标系。
+
+GDAL 中使用其投影 data
+文件夹有两种方式：一种是在电脑高级设置中添加系统变量，另一种则是在文件中对应添加设置
+GDAL_DATA 变量的代码，如：
+
+.. code:: c++
+
+   CPLSetConfigOption("GDAL_DATA", "D:\\gdal-2.2.1\\data"); //允许设置相对路径
+
+由此，可借助参考文献[8]中的坐标转换方式来获取投影坐标 XY
+转换为对应坐标系统下的地理坐标系 BL 的方法。但需要注意的是，Cesium 以及
+OSG 地球采用的坐标系统是 WGS84
+坐标系，需要在执行地理坐标系转换之后再执行一次坐标系变换。
+
+.. _16-内存占用问题:
+
+1.6 内存占用问题
+~~~~~~~~~~~~~~~~
+
+经调查发现，转换程序的内存占用很有可能是因为 ``createChildNode()``
+函数中的链表
+``childlist``\ 。当初设计时为了减少节点读取释放开销将该链表定义为存储
+``osg::Node``
+智能指针的容器，愿以为链表中不会存储太多的节点信息，然而在实际使用过程中发现该链表居然存储了
+400 多个 osgb
+节点，这显然会使内存急剧上升；为了解决这一问题，暂且考虑将链表声明为 ：
+
+.. code:: c++
+
+   std::list<std::string> childlist; //存储文件路径即可
+
+接下来进行程序测试；能够解决内存暴涨问题。
+
+.. _17-并行加速:
+
+1.7 并行加速
+~~~~~~~~~~~~
+
+该问题实际上等同于四叉树遍历的并行加速问题，同样也等同于递归切分和并行问题。先来简单了解下并行计算，并行计算包括三种类型：计算密集型、数据密集型、网络密集型。
+
+|  **1).** **计算密集型** 如大型科学工程计算与数值模拟；
+|  **2). 数据密集型** 如数字图书馆、数据仓库、数据挖掘和计算可视化；
+|  **3). 网络密集型** 如协同计算和远程诊断等。
+
+对于本文来说，此次计算应该归于计算密集型并行计算。PRAM（Parallel Random
+Access
+Machine）并行随机存取机器，是一种抽象并行计算模型，它假设：存在容量无限大的
+SM，有限或无限个功能相同的处理器，且均有简单算术运算和逻辑判断功能；任何时刻各处理器可通过SM交换数据。
+
+递归问题的并行计算方法是将递推关系式展开，根据方程式展开方法可分为：倍增法、分段法、循环加倍法等三种并行算法。啊好烦，就是一直搞不懂递归和迭代这俩有啥区别，这次抽出点时间来梳理一下。
+
+|  **迭代**
+  交替相代，数学意义的概念，由变量原值推出变量的新值，为得到结果，重复一定的算法《明日边缘》；
+|  **递归**
+  更易而归，计算机设计概念，是程序调用自身的编程技巧，自己调用自己，自己包含自己《盗梦空间》。
+
+所以说，计算机层面上递归是迭代的一种表现形式；由于递归过程中通常会在调用记录中保留函数、变量两部分的内存，故而会很容易产生栈溢出错误。递归问题不能空想，思考下面这样一个算例，以其为例：
+
+   | **递归问题**
+   | 假设有集合
+     :math:`N=\{1,2,3,\cdots,n|n\in\mathbb{R}^+\}`\ ，给出数字
+     :math:`m`\ ，举出集合中所有维度为 :math:`m`
+     的排列组合，这里集合中的数允许重复。如给出数字 :math:`m=3` 和集合
+     :math:`N=\{1,2,3,4\}` 则程序的输入为：
+
+   .. code:: 
+
+      3,4
+
+   输出结果为：
+
+   .. code:: 
+
+      {1,1,1};{1,1,2};...;{4,4,4}
+
+针对这样一个递归问题，本文的解决思路是： ① 先写出常规 3 层循环迭代；②
+随后判断递归退出条件；③ 接下来提取不变量形成迭代规律函数；④
+写出相关代码。这里 :math:`n` 是递归深度，\ :math:`m`
+是递归广度；根据这个思路，一段可行的 C++ 代码思路是：
+
+.. code:: c++
+
+   //测试网页
+   //   http://www.dooccn.com/cpp/
+   //单机迭代的相关思路
+   void function(int m, vector<int>& R, string& str){
+       // 2nd 判断递归退出条件
+       if (m == 0) { cout << str << endl; return; }
+       std::string temp_str;
+       m--;
+       // 3rd 迭代规律函数
+       for(int i = 0; i < R.size(); i++){
+           temp_str = str + std::to_string(R[i]) + " ";
+           function(m, R, temp_str);
+       }
+   }
+
+由上面的递归问题可以确定，集合 :math:`N`
+的大小决定了递归算法的复杂度，确切来说这个排列组合的算法复杂度可以表示为
+:math:`O(n^3)`\ ，更慎者，可以变成
+:math:`O(n^m)`\ ，这简直是爆炸性的算法增长；通过迭代改写，可以将递归问题的算法复杂度在一定程度上缩短，但这个缩短是在牺牲内存空间的前提下确定的。
+
+通过了解发现，Java 对并行的支持要比 C++
+好很多，对于许多已经写好的算法而言甚至可以直接将其函数丢到 Java
+的某个类库中进行并行化的处理；而 C++
+就必须自己去了解程序的运行机制，修改算法策略。上海交通大学王琦的学位论文《并行树和图计算框架的分布式实现》中介绍了一些关于并行树的收缩、约简和切分的技术；其中的
+2.2.1.5 节提到一个 MapReduce
+的树并行策略，针对的是纯树结构处理的加速，MapReduce
+针对同构数据具有良好的表现性能，对树的处理则思路比较复杂。
+
+分析前阶段所设计的递归改迭代策略，可以考虑在 ``run()``
+函数中使用双层循环控制进程的休眠和激活来实现多个线程控制处理迭代链表中的文件的处理。
+
+.. _18-geometic-error:
+
+1.8 Geometic Error
+~~~~~~~~~~~~~~~~~~
+
+终于把这个问题提上日程了。在 3DTiles
+的官方文档中详细介绍了关于几何度量误差 Geometric Error
+的一些理念和内涵，概括来说可以翻译为如下定义：
+
+   **几何度量误差**\ ，Geometric Error，简称
+   GE，是计算机图形图像学领域中用来描述计算机绘制的近似几何模型与理想数学模型之间近似程度的一种度量误差。
+
+除此之外，与几何度量误差概念相似但表现形式不同的还有一个名为 Screen
+Space Error
+的屏幕空间误差，是几何度量误差在三维渲染管线处理后最终呈现在屏幕上的一种表现形式。二者之间的关系如下图：
+
+3DTiles
+的设计师们在这个概念的基础上做了一件很有意思的事情，他们将这个几何度量误差与层次化细节模型紧密衔接在一起，用几何度量误差来敲定层次化细节模型的加载时机和加载顺序。所谓的层次化细节层次模型，其英文全称为
+Hierachical Level of Detail，也即
+HLOD，可以理解为细节层次模型的一类变种：
+
+   | **LOD**\ ，Level of Detail，细节层次模型
+   | 根据距离用一个模型代替另一个模型，当距离该模型远的时候，可以用一个面数更少的模型来代替之前的模型来较少渲染损耗。这个过程需要额外的一次绘制调用。
+
+   | **HLOD**\ ，Hierarchical Level of Detail，层次化细节层次模型
+   | 当距离足够远时，可以把多个对象组合成一个新的对象，这个新的对象是一个低面数的模型。
+
+拿屏幕空间误差 SSE 作为理解 HLOD
+切换的核心，可以这样解释：计算机所绘制的近似几何模型是且仅是栅格数据结构，当用户的浏览视角对近似几何模型进行放大时，几何模型的光栅化效果将会以更多的像素放大近似模型与理想数学模型之间的差距，具体呈现为屏幕空间误差
+SSE 在其数值意义上的膨胀。HLOD
+在这个基础上为实现屏幕误差的逐级逼近所做的事情只有一个：当屏幕空间误差
+SSE 超过某一阈值时，将原来的粗略模型切换为更精细的几何模型。
+
+那么，接下来的问题就是，如何计算出这个我们所需要的 Geometric Error
+的大小呢。首先来看一下官方文档中所给出的在透视投影几何中， SSE 与 GE
+之间的转换关系式：
+
+.. math:: e_{s}=\frac{e_{g}\cdot H}{d\cdot 2\cdot\tan\left(\theta_f/2\right)}
+
+其中，\ :math:`e_{s}` 为屏幕空间误差，\ :math:`e_g`
+为几何度量误差，\ :math:`H` 为以像素为单位的渲染窗口的高度，\ :math:`d`
+为视线中心与瓦片中心之间的距离，\ :math:`\theta_f` 为视场角的大小。参照
+jdq0603 博客《\ `3DTile
+的geometricError含义 <https://blog.csdn.net/rsoftwaretest/article/details/106740269>`__\ 》的理解可以绘制出一个关于
+Geometric Error 和 Screen Space Error 之间转换关系的示意图：
+
+据此，可根据相似三角形以及三角函数的相关公式推知：
+
+.. math:: e_s=d'\cdot\frac{ e_g}{d}=\frac{H}{2\tan(\theta_f/2)}\cdot\frac{e_g}{d}=\frac{e_{g}\cdot H}{d\cdot 2\cdot\tan\left(\theta_f/2\right)}
+
+显然，这里的转换关系针对的是具体的数值而非 jdq0603
+的博客所理解的物体的半径大小，也就是说这个公式中并没有体现出上文所提到的几何度量误差的实际意义，其代表的是数值映射关系，而非
+Geometric Error 的抽象指代。秋意正寒的《\ `3dTiles
+几何误差详解 <https://www.cnblogs.com/onsummer/p/13357226.html>`__\ 》一文所指出几何度量误差的计算是一个依赖于经验值的东西，其大小与观察距离有一定程度的联系，其提供了这样一个经验公式：
+
+.. math:: e_g=f(d)\approx d\times0.56\times 16 \div 936=0.00957\cdot d
+
+其中参数约束条件是：使用视场角为 60° 的默认相机，显示屏幕大小是
+1920×1080，浏览器的 Canvas 占满了前端的 H5
+页且浏览器是最大化的状态；此时的 :math:`H` 通常为 936
+像素，默认最大屏幕空间误差为 16。源程序设计者使用了这样一种策略：
+
+.. math:: e_g=f(d)=\pi\cdot r^2/\text{ScreenPixels}
+
+俺 jiao 得，既然本章节论证了这个 GE
+怎么都是个经验值，何不就采用这种方式直接生成了呢。嗨呀，实际情况证明这个数计算的有点不太准确，后面再仔细研究研究吧。
+
+.. _参考文献-1:
+
+参考文献
+~~~~~~~~
+
+1.  CesiumLab.\ `CustomPrimitive不显示背面 <http://cesiumlab.cn/question?questionId=43>`__\ [EB/OL].
+
+2.  CSDN博客.\ `glEnable/glDisable(GL_CULL_FACE)与glCullFace() <https://blog.csdn.net/iteye_9368/article/details/82170342>`__\ [EB/OL].
+
+3.  简书.\ `OpenGL案例-绘制甜甜圈以及隐藏面消除(正背面剔除和深度测试) <https://www.jianshu.com/p/9f8c787844d2>`__\ [EB/OL].
+
+4.  知乎.\ `如何理解OpenGL中的backface
+    culling以及图形的正反面？ <https://www.zhihu.com/question/41690252?sort=created>`__\ [EB/OL].
+
+5.  CSDN博客.\ `OpenGL 延迟渲染
+    正面、背面剔除 <https://blog.csdn.net/qq_26328385/article/details/111088046>`__\ [EB/OL].
+
+6.  GIS开发者.\ `EPSG <https://www.giserdqy.com/gis/opengis/geoserver/17394/>`__\ [EB/OL].
+
+7.  CSDN博客.\ `WKT简介 <https://blog.csdn.net/zhangzz1127/article/details/10278755>`__\ [EB/OL].
+
+8.  博客园.\ `GDAL坐标转换 <https://www.cnblogs.com/charlee44/p/6919412.html>`__\ [EB/OL].
+
+9.  CSDN博客.\ `并行计算及并行算法 <https://blog.csdn.net/lulu950817/article/details/80686126>`__\ [EB/OL].
+
+10. CSDN博客.\ `阿姆达尔定律 <https://blog.csdn.net/u011186240/article/details/98600436>`__\ [EB/OL].
+
+11. 知乎.\ `Amdahl
+    定律 <https://zhuanlan.zhihu.com/p/107535094>`__\ [EB/OL].
+
+12. 知乎.\ `对于递归有没有什么好的理解方法？ <https://www.zhihu.com/question/31412436>`__\ [EB/OL].
+
+13. CSDN博客.\ `使用并行计算大幅提升递归算法效率 <https://blog.csdn.net/fourinone/article/details/8330711>`__\ [EB/OL].
+
+14. 廖雪峰的官方网站.\ `map/reduce <https://www.liaoxuefeng.com/wiki/1016959663602400/1017329367486080>`__\ [EB/OL].
+
+15. 博客园.\ `MapReduce基本原理及应用 <https://www.cnblogs.com/lixiansheng/p/8942370.html>`__\ [EB/OL].
+
+Q2、Vector Research
+-------------------
+
+经过论证，矢量查询功能需要两个要点：1 是使用 GDAL 程序提供查询功能，2
+是利用 OSG 的事件响应机制来为查询机制提供 UI 交互操作。另外 GDAL 提供了
+SQL 查询方法，后面编程的时候可以参考一下。
+
+.. _21-注册树模式:
+
+2.1 注册树模式
+~~~~~~~~~~~~~~
+
+**注册树模式**\ 是一种通过将对象实例注册到一棵全局的对象树上，需要的时候从对象树上采摘的模式设计方法。注册树模式与工厂模式、单例模式相似的是减少并维持某个实例的唯一性，与工厂模式、单例模式所不同的是其维持的实例是放到全局来进行统一管理调度的。注册树模式的几个要点：
+
+   .. code:: shell
+
+      存在：有棵树！
+      注册：有把实例挂到树上的方法；
+      读取：实现用的功能；
+      注销：用完丢掉。
+
+   故而，定义这个注册树模式仅需要定义四个要义方法即可，由此可以解决全局共享的相关问题。
+
+如上，在 PHP
+中实现了这种注册树模式后，在使用时仅需要简单的执行如下代码即可：
+
+.. code:: php
+
+   Register::set('apple', new Apple());
+   $getApple = Register::get('apple');
+   Regiter::_unset('apple');
+
+.. _22-查询:
+
+2.2 查询
+~~~~~~~~
+
+MessageBox 乱码问题
+^^^^^^^^^^^^^^^^^^^
+
+C++ 使用 Windows.h 下的 MessageBox
+时偶尔会遇到乱码问题，分析并查询资料的发现有可能是关键词 LPCSTR
+使用不当所引起的。\ ``char buf[100]`` 是采用的 ANSI 字符集，而
+``MessageBox()`` 的 ``MessageBoxW()`` 版本使用的是 Unicode
+字符集，其原始设计包含三种设定：
+
+|  **1).** 使用 ``char`` 类型应该用 ``MessageBoxA()`` 函数；
+|  **2).** 使用 ``WCHAR`` 类型应该用 ``MessageBoxW()`` 函数；
+|  **3).** 使用 ``TCHAR`` 模板应该用 ``MessageBox()`` 函数；
+
+在使用时，根据具体情况进行具体分析，使用对应的函数即可。
+
+.. _23-观察者模式:
+
+2.3 观察者模式
+~~~~~~~~~~~~~~
+
+设计模式（Design
+Pattern）是前辈们对代码开发经验的总结，是解决特定问题的一系列套路。它不是语法规定，而是一套用来提高代码可复用性、可维护性、可读性、稳健性以及安全性的解决方案。1995
+年，GoF（Gang of
+Four，四人组/四人帮）合作出版了《设计模式：可复用面向对象软件的基础》一书，共收录了
+23
+种设计模式，从此树立了软件设计模式领域的里程碑，人称「GoF设计模式」。这
+23
+种设计模式的本质是面向对象设计原则的实际运用，是对类的封装性、继承性和多态性，以及类的关联关系和组合关系的充分理解。
+
+下面本文将根据设计需要，选择其中行为型模式中的观察者模式进行学习：
+
+**观察者模式**\ 指多个对象间存在一对多的依赖关系，当一个对象的状态发生改变时，所有依赖于它的对象都得到通知并被自动更新。这种模式有时又称作\ **发布—订阅模式**\ 、\ **模型—视图模式**\ ，它是对象行为型模式，其主要优点有：
+
+|  1).
+  降低了目标与观察者之间的耦合关系，两者之间是抽象耦合关系。符合依赖倒置原则。
+|  2). 目标与观察者之间建立了一套触发机制。
+
+它的主要缺点如下：
+
+|  1).
+  目标与观察者之间的依赖关系并没有完全解除，而且有可能出现循环引用。
+|  2). 当观察者对象很多时，通知的发布会花费很多时间，影响程序的效率。
+
+观察者模式使用两个类 *Subject* 和 *Observer*\ 。\ *Subject*
+对象带有绑定观察者和解绑观察者的方法。在实际应用中一般会有这样几个类：
+*Subject* 类、\ *Observer* 抽象类和扩展了抽象类 *Observer* 的实体类。
+
+.. figure:: C:\Users\Administrator\Desktop\Jaxin's%20question%20list\pic\202106\Observer.png
+   :alt: 
+
+以上即为观察者模式的 UML 类图。
+
+.. _参考文献-2:
+
+参考文献
+~~~~~~~~
+
+1. CSDN博客.\ `注册树模式 <https://blog.csdn.net/u013049553/article/details/79796444>`__\ [EB/OL].
+
+2. CSDN博客.\ `PHP
+   工厂模式、单例模式、注册器模式以及适配器模式 <https://blog.csdn.net/hualaoshuan/article/details/95325393>`__\ [EB/OL].
+
+3. 新浪博客.\ `MessageBox((LPCTSTR)buf)显示乱码 <http://blog.sina.com.cn/s/blog_49e4019f0100t53l.html>`__\ [EB/OL].
+
+4. C语言中文网.\ `观察者模式（Observer模式）详解 <http://c.biancheng.net/view/1390.html>`__\ [EB/OL].
+
+5. 菜鸟教程.\ `观察者模式 <https://www.runoob.com/design-pattern/observer-pattern.html>`__\ [EB/OL].
+
+Q3、能源集团大屏展示系统
+------------------------
+
+.. _31-显示调整:
+
+3.1 显示调整
+~~~~~~~~~~~~
+
+1. 修正中心点位置坐标为更贴近东北郊热力服务中心的点位。修正图像数据插值密度为
+   1000 :math:`\times` 1000，广义带宽半径修正为
+   40，使得热力图变得更加平滑，细节更加清晰。
+
+2. 根据龙哥指示，用 EarthSDK 中的图层替换掉原来 Mars3D
+   的图层，使得高德地图的火星坐标系纠正为 WGS-84 坐标系，修正位置偏移。
+
+3. 另外，预计使用 EarthSDK
+   的蓝模显示系统替换掉现有的蓝模显示系统，使用渐变蓝色来进行修复。
+
+Cesium 着色器
+^^^^^^^^^^^^^
+
+通过查阅各种网络资料，发现了一个比较靠谱的关于 Cesium
+着色器的论述如下。但下面论述的最终解决方案仍然摆脱不了 Cesium 的
+Apperance 类，该类与 Primitive
+几何图元紧密衔接，具体实例参见参考文献[1]，其 API
+文档中的具体介绍参见参考文献[2]。以下是几种浅入深的几种 Cesium
+自定义渲染状态的方法：
+
+-  Create geometries for your data from Cesium's large geometry
+   collection
+   (`tutorial <https://cesium.com/docs/tutorials/geometry-and-appearances/>`__).
+   This doesn't require any WebGL.
+
+   **1.st) 无需 WebGL 策略**\ ：从 Cesium
+   现有几何体集合中抽调抽象类型并根据自定义数据进行定制。
+
+-  | Create custom geometries, basically vertex and index buffers, and
+     appearances, basically shaders and render state (`partial draft
+     tutorial <https://github.com/AnalyticalGraphicsInc/cesium/wiki/Geometry-and-Appearances>`__).
+     Mix and match your own with Cesium's collection. This can require
+     writing GLSL shaders, but the other WebGL features are abstracted.
+   | **2.nd) 仅需 GLSL
+     策略**\ ：自定义几何、顶点、顶点索引、外观、着色器和渲染状态，将
+     Cesium 引擎中混入自定义几何信息。
+
+-  | Implement a Cesium primitive, which has full access to the Cesium
+     renderer - including vertex arrays, buffers, textures, render
+     state, shader programs, framebuffers, etc. A simple example is the
+     `EllipsoidPrimitive <https://github.com/CesiumGS/cesium/blob/master/Source/Scene/EllipsoidPrimitive.js>`__.
+   | **3.rd) 实例化 Primitive 策略**\ ：自定义图元，拥有对 Cesium
+     几何图元所有渲染状态的控制权。
+
+但作者 *Patrick Cozzi*
+也提出对于复杂图元来说，特别是对现在倾斜摄影测量所处理的实景三维模型来说，使用上面的方法还是很难直接得到我们所需要的结果的，所以可能需要在原有代码的基础上深入源码进行处理了。
+
+EarthSDK
+^^^^^^^^
+
+EarthSDK
+中修改源码指定了自定义着色器的方法。普通shader里，可以使用内部变量
+``czm_frameNumber`` 获取每帧的编号，以实现动画效果。Shader 内置函数
+``fract(x)`` 的含义是取 ``x``
+的小数部分。不过笔者认为修改配置文件的方式应该也能够实现以上的需求，当然，得是在正确的
+configure.json 配置文件中 :)。
+
+弹出签背景透明
+^^^^^^^^^^^^^^
+
+下月再说。
+
+.. _32-参数面板与数据交互:
+
+3.2 参数面板与数据交互
+~~~~~~~~~~~~~~~~~~~~~~
+
+下月再说。
+
+.. _参考文献-3:
+
+参考文献
+~~~~~~~~
+
+1. CSDN博客.\ `cesium着色器学习系列3-着色器方式绘制图元 <https://blog.csdn.net/A873054267/article/details/105141034>`__\ [EB/OL].
+
+2. Cesium.\ `Appearance <https://cesium.com/docs/cesiumjs-ref-doc/Appearance.html?classFilter=App>`__\ [EB/OL].
+
+3. 博客园.\ `Cesium原理篇：6 Render模块(3:
+   Shader) <https://www.cnblogs.com/fuckgiser/p/5975274.html>`__\ [EB/OL].
+
+4. CSDN博客.\ `Cesium \| 建筑光效 \| 基于3dtileset的建筑物效果插件 \|
+   支持自定义着色器 <https://blog.csdn.net/weixin_40902527/article/details/110224380>`__\ [EB/OL].
+
+5. 博客园.\ `Cesium渲染一帧中用到的图形技术 <https://www.cnblogs.com/charlee44/p/14199558.html>`__\ [EB/OL].
+
+6. Cesium.\ `czm_frameNumber <https://cesium.com/downloads/cesiumjs/releases/b19/Documentation/czm_frameNumber.html#czm_frameNumber>`__\ [EB/OL].
+
+7. CSDN博客.\ `GLSL和Shader相关知识 <https://www.cnblogs.com/wanghui2011/articles/10870322.html>`__\ [EB/OL].
+
+8. C语言中文网.\ `GoF 的 23
+   种设计模式的分类和功能 <http://c.biancheng.net/view/1320.html>`__\ [EB/OL].
+
+9. 游侠.\ `OGC标准WMTS服务概念与地图商的瓦片编号流派-web地图切片加载 <https://www.cnblogs.com/hustshu/p/14713196.html>`__\ [EB/OL].
+
+Q4、BIM模型服务地址管理系统
+---------------------------
+
+.. _41-数据库迁移:
+
+4.1 数据库迁移
+~~~~~~~~~~~~~~
+
+由于若依框架采用的是 MySQL 数据库初始化的方式，其 sql 文件无法导入到
+PostgreSQL 中，故而需要做一个数据库迁移的操作，参考两篇文章[1-2]利用
+Navcat 工具做出如下技术路线：
+
+|  **1)**. 使用逆向数据库到模型操作将 MySQL 数据库抽象为模型；
+|  **2)**. 使用模型导出工具将数据库表结构导出为 SQL 文件；
+|  **3)**. 使用导出的 SQL 文件创建 PostgreSQL 中的表结构；
+|  **4)**. 使用数据传输工具将数据由 MySQL 数据库传往 PostgreSQL 数据库。
+
+通过测试证明，上述方法可以有效的达到预期的效果。
+
+.. _42-postgressql-数据库:
+
+4.2 PostgresSQL 数据库
+~~~~~~~~~~~~~~~~~~~~~~
+
+需要注意的几点内容：
+
+多个外键关联同一个主键
+^^^^^^^^^^^^^^^^^^^^^^
+
+如题所述，对于两个表存在多个外键关联同一个主键的情况可以使用下面的方式进行查询：
+
+.. code:: sql
+
+   SELECT
+   	B.pid, B.name, 
+   	a1.name AS jsdw,
+   	a2.name AS sgdw,
+   	a3.name AS jldw
+   FROM 
+   	(SELECT * FROM A) AS a1 
+   	RIGHT JOIN B ON a1.id = B.jsdw
+   	LEFT JOIN A AS a2 ON a2.id = B.sgdw
+   	LEFT JOIN A AS a3 ON a3.id = B.jldw
+
+该查询方法参考自本节参考文献[7]的思路。
+
+MyBatis 的 resultMap 元素
+^^^^^^^^^^^^^^^^^^^^^^^^^
+
+首先，来看一下 MayBatis 的 ``<resultMap>`` 标签中含包含了哪些子元素：
+
+.. code:: xml
+
+   <resultMap id="唯一标识符" type="映射的 POJO 对象">
+       <constructor><!-- 类再实例化时用来注入结果到构造方法 -->
+           <idArg/><!-- ID参数，结果为ID -->
+           <arg/><!-- 注入到构造方法的一个普通结果 -->  
+       </constructor>
+       <id/><!-- 用于表示哪个列是主键 -->
+       <result/><!-- 注入到字段或JavaBean属性的普通结果 -->
+       <association property=""/><!-- 用于一对一关联 -->
+       <collection property=""/><!-- 用于一对多、多对多关联 -->
+       <discriminator javaType=""><!-- 使用结果值来决定使用哪个结果映射 -->
+           <case value=""/><!-- 基于某些值的结果映射 -->
+       </discriminator>
+   </resultMap>
+
+从上面的介绍来看， resultMap
+标签蕴含了巨大的能量，其一对一关联、多对多关联的特性允许我们执行许多特殊的数据库查询操作。对于本章节需要的联查来说，只需要修改对应的
+type 为 BimProjectPro 即可。
+
+MyBatis 的返回值
+^^^^^^^^^^^^^^^^
+
+涉及到 MyBatis 的 insert、update、delete
+方法的返回值的问题，这里记录一下：
+
+|  **1).** ``insert`` 插入 n 条记录，返回影响行数
+  n，n\ :math:`\in[1,\infty]`\ ，n 为 0 时表示插入失败。
+|  **1).** ``update`` 更新 n 条记录，返回影响行数
+  n，n\ :math:`\in[0,\infty]`\ 。
+|  **1).** ``delete`` 删除 n 条记录，返回影响行数
+  n，n\ :math:`\in[0,\infty]`\ 。
+
+简而言之，使用 MyBatis 的 Mapper 作为数据库持久层时其默认返回的是 SQL
+语句的影响行数。
+
+MyBatic 的 Group By 操作
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+参照参考文献[11]即可。
+
+配置自增序列
+^^^^^^^^^^^^
+
+   自定义序列 pg_serial
+   后，在默认中添加\ ``nextval(‘pg_serial’::regclass)``\ 。
+
+查询数据库的表信息 
+^^^^^^^^^^^^^^^^^^
+
+（1）\ **列出所有表名**\ ：
+
+.. code:: sql
+
+   SELECT tablename FROM pg_tables WHERE schemaname='public'；
+
+（2）\ **列出其他信息**\ ：
+
+.. code:: sql
+
+   SELECT table_name, table_comment
+   FROM(
+   	SELECT 
+   		relname AS table_name,
+   		cast(obj_description(relfilenode,'pg_class') AS VARCHAR) AS table_comment
+   	FROM
+   		pg_class c
+   	WHERE
+   		relkind='r'
+   ) AS temp
+   WHERE
+   	table_name NOT LIKE 'pg_%'
+   	AND table_name NOT LIKE 'sql_%'
+   ORDER BY
+     table_name
+
+注意：这里通过 SQL 子查询实现了一个将 select as 字段应用到 SQL
+查询中的方法。
+
+（3）\ **列出所有列名**\ ：
+
+.. code:: sql
+
+   SELECT
+       col_description(a.attrelid, a.attnum) AS column_comment,
+       format_type(a.atttypid, a.atttypmod) AS column_type,
+       a.attname AS column_name,
+       a.attnotnull AS is_required
+   FROM
+       pg_class AS c,
+       pg_attribute AS a
+   WHERE
+       c.relname = (#{tableName})
+       AND a.attrelid = c.oid
+       AND a.attnum > 0
+
+.. _43-若依设置鉴权:
+
+4.3 若依设置鉴权
+~~~~~~~~~~~~~~~~
+
+设置接口鉴权权限
+^^^^^^^^^^^^^^^^
+
+分离版若依框架中，关于指定接口的鉴权权限可以在 framework 包中
+SecurityConfig.java 文件的 ``configure()`` 函数中进行设置，如设置忽略对
+system 下的接口的鉴权可以用下面的方式：
+
+.. code:: java
+
+   httpSecurity.antMatcher("/system/**").annoymous();
+
+但是这样一来似乎引起了跨域访问问题，所以得考虑一下怎么处理相关的问题。试试将
+swagger 添加的域 dev-api 给加上呢？不行；单独将 system
+域下的各个自定义添加的表服务加上呢？可以。那就暂且用这种方法：
+
+.. code:: java
+
+   httpSecurity.antMatcher("/system/type/*").annoymous();
+
+.. _参考文献-4:
+
+参考文献
+~~~~~~~~
+
+1.  CSDN博客.\ `mysql的表结构转换为postgresql <https://blog.csdn.net/greatjoe/article/details/114366625>`__\ [EB/OL].
+
+2.  CSDN博客.\ `用navicat把MySQL数据库迁移到PostgreSQL <https://blog.csdn.net/qq_35119693/article/details/80912024>`__\ [EB/OL].
+
+3.  CSDN博客.\ `Navicat创建pgsql序列自增 <https://blog.csdn.net/weixin_45730286/article/details/108116712>`__\ [EB/OL].
+
+4.  CSDN博客.\ `查看PostgreSQL数据库中所有表 <https://blog.csdn.net/huangbaokang/article/details/88862791>`__\ [EB/OL].
+
+5.  CSDN博客.\ `postgressql数据库查询数据库中的所有表及表注释、表的字段、类型、注释 <https://blog.csdn.net/qq_28245087/article/details/87894272>`__\ [EB/OL].
+
+6.  CSDN博客.\ `PostgreSql查询数据库中所有表基础信息，以及字段基础信息 <https://blog.csdn.net/zjh19961213/article/details/106947123?utm_medium=distribute.pc_relevant.none-task-blog-baidujs_title-0&spm=1001.2101.3001.4242>`__\ [EB/OL].
+
+7.  博客园.\ `一张表多个外键指向同一主键 <https://www.cnblogs.com/whiteme/p/9155644.html>`__\ [EB/OL].
+
+8.  C语言中文网.\ `MyBatis
+    resultMap元素的结构及使用 <http://c.biancheng.net/view/4366.html>`__\ [EB/OL].
+
+9.  博客园.\ `Mybatis：resultMap的使用总结 <https://www.cnblogs.com/kenhome/p/7764398.html>`__\ [EB/OL].
+
+10. 博客园.\ `Mybatis执行sql（insert、update、delete）返回值问题 <https://www.cnblogs.com/ZTPX/p/10552512.html>`__\ [EB/OL].
+
+11. 博客园.\ `mybatis中查询结果进行分组 <https://www.cnblogs.com/ahang/p/6677062.html>`__\ [EB/OL].
+
+12. Kalvin在线工具.\ `Swagger转word文档生成工具 <https://tools.kalvinbg.cn/dev/swagger2word>`__\ [EB/OL].
+
+13. 游侠舒迟.\ `OGC标准WMTS服务概念与地图商的瓦片编号流派 <https://www.cnblogs.com/hustshu/p/14713196.html>`__\ [EB/OL].
