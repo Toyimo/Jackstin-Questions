@@ -1,0 +1,1016 @@
+Question List in November, 2021
+===============================
+
+😰 Winter is comming.
+
+问立志。先生曰：“只念念要存天理，即是立志。能不忘乎此，久则自然心中凝聚。犹道家所谓结圣胎也。此天理之念常存。驯至于美大圣神，亦只从此一念存养扩充去耳”。
+
+处朋友，务相下，则得益。相上则损。
+
+又曰：“立志用功，如种树然。方其根芽，犹未有干。及其有干，尚未有枝。枝而后叶。叶而后花实。初种根时，只管栽培灌溉。勿作枝想。勿作叶想。勿作花想。勿作实想。悬想何益？但不忘栽培之功，怕没有枝叶花果”？
+
+.. raw:: html
+
+   <html xmlns="http://www.w3.org/1999/xhtml"><head></head><body><div align="right">——王阳明《传习录》</div></body></html>
+
+.. _13dtiles-调整工具与矢量查询:
+
+1、3DTiles 调整工具与矢量查询
+-----------------------------
+
+承接上月关于 Geometric Error
+修改工具以及矢量查询界面的思路，对相关内容予以完善。
+
+.. _11-ro3modifier-工具:
+
+1.1 Ro3Modifier 工具
+~~~~~~~~~~~~~~~~~~~~
+
+修改工具使用 Python 编写，其名称暂定为
+Ro3Modifier，其主要功能是用于按照层级文件夹修改 3DTiles
+格式文件的几何误差，目前框架思路是通过乘积关系更改上下层级之间的视距切换方案。
+
+如上图所示，目前的设计方案就是使用这样一个表格去勘测或调整各层级瓦片之间的缩放因子。需要注意的是如果某一级瓦片因子调整超限，以至于超过了其上层视距的大小则会使得瓦片无法正常调度，所以应该在程序中添加禁令以防止这种问题的出现。也就是说调整某一层级的
+Child 的 Geometric Error 时，这个 GE 不应该超出当前这个文件内的 GE
+属性的大小。
+
+.. _12-矢量点击查询工具:
+
+1.2 矢量点击查询工具
+~~~~~~~~~~~~~~~~~~~~
+
+简单设计了下点击查询矢量图斑的界面如下，为了尽可能简化用户操作，每次查询仅供一个图层的查询；多图层查询界面以及逻辑设计后面再说。
+
+矢量点击查询应该做成一个工具图签放到系统中，点击时弹出该窗口，触发点击事件时根据复选框中选择的图层内容对注册图层进行刷新，并同步清空属性中的表格内容；该界面逻辑有两个要点：其一是矢量图层组的接入和映射，其二是关闭窗口时关闭属性查询功能。
+
+DevExpress: ComboBoxEdit
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+在代码中添加 ``ComboBoxEdit`` 的 ``Item``
+的方式是自定义一个结构体，并提供相应的 ``ToString()``
+方法以供该控件将结构体中指定的成员显示在下拉框中。定义结构体如下：
+
+.. code:: c#
+
+   public class VectorData {
+       public string Text { set; get; }
+       public string Value { set; get; }
+       public override string ToString(){ return Text; }
+   }
+
+使用方法如下：
+
+.. code:: c#
+
+   VectorData data = new VectorData();
+   data.Text = "矢量图层1";
+   data.Value = "C:/Users/Administrator/Desktop/Note/Buildings.shp";
+   this.ComboBoxEdit.Properties.Items.Add(data);
+   this.ComboBoxEdit.Refresh();
+
+如此即可完成简单的初始化操作。获取选中下拉内容时，应使用如下方法。
+
+DevExpress: GridControl
+^^^^^^^^^^^^^^^^^^^^^^^
+
+通过数据绑定在 C#
+中实现数据表的关联、显示和编辑等操作；一般来说的设计思路是：1.创建
+``DataTable``\ ，2.绑定 ``GridControl`` 的数据源，3.更新
+``DataTable``\ ，4.调用 ``GridView::RefreshData()``
+函数。其中，初始化数据并绑定的相关操作如下：
+
+.. code:: c#
+
+   DataTable dt = new DataTable();
+   dt.Columns.Add("名称", typeof(string));
+   dt.Columns.Add("属性值", typeof(string));
+   this.GridControl.DataSource = dt;    //绑定数据源
+   this.GridView.OptionsBehavior.ReadOnly = true;//只读
+   this.GridView.PopulateColumns();     //自动创建列
+   this.GridView.Columns[0].Width = 40; //设置列宽
+   this._datasource = dt;               //设定全局数据源
+
+更新时，只需更新 ``DataTable`` 数据源，然后刷新显示即可：
+
+.. code:: c#
+
+   //清空表格内已有数据并添加新数据
+   // this.GridView.SelectAll();
+   // this.GridView.DeleteSelectedRows();
+   //清空原始数据
+   this._datasource.Rows.Clear();
+   for (int i = 0; i < keys.Count; i++) {
+       this._datasource.Rows.Add(new object[] { keys[i], values[i] });
+   }//重新添加数据
+   //刷新数据源
+   this.gv_vec.RefreshData();
+
+由此，即可完成 DevExpress 中 GridControl 的简单使用。
+
+委托与回调
+^^^^^^^^^^
+
+该通用查询工具需要同时使用委托与回调。其中的委托是将图层信息传递给主窗体，回调是将主窗体处理查询后得到的信息反馈给子窗体进行相关信息的同步显示。一个委托的使用示例如下：
+
+.. code:: c#
+
+   //ChildForm.cs
+   public delegate void SendFunc(string str);  //委托函数定义
+   public SendFunc SendToParent;               //委托实例
+   SendToParent("Hello world.");               //调用委托
+   //ParentForm.cs
+   ChildForm form = new ChildForm();           //引用子窗体
+   form.SendToParent += new SendFunc(RecvInfo);//添加委托响应
+   private void RecvInfo(string str){...}      //委托响应实例
+
+而回调本质上是将函数作为参数传递出去。还不如在主函数中定义一个私有变量
+ChildForm，新建时为其赋予内存空间，用完了就指向空值；如此一来就能在恰当的地方调用更新显示函数了。
+
+.. _13-c虚函数与虚表:
+
+1.3 C++虚函数与虚表
+~~~~~~~~~~~~~~~~~~~
+
+前面在解决菱形继承问题的时候我们介绍了虚继承，并在后文简单介绍了虚指针与虚函数表，这里需要做一个说明：\ **虚函数表只是虚表的一部分**\ ；而在这一章节中需要注意的是：不同的编译器会对虚表和虚基表采用不同的设计模式，故而对于添加了虚继承且自身带有虚函数的类而言，其可能增加
+0、1 或 2 个指针。2 个指针很好理解，就是指向虚表的 vptr 和指向虚基表的
+vbptr；0 个指针则使用某种方法而根本不加入额外的指针，此时编译器让 vptr和
+vtbl 承担双重责任；而 1
+个指针的策略是将虚基类表合并到虚表中，此时只需一个 vptr
+指针即可，但这样做的缺点是需要为一些中间类型（如 B、C
+)准备多个虚表。不同的编译器对虚基表有不同的解释模式，GCC 一般称作VTT 即
+*Virtual Table Table*\ ，VC 一般称为虚基表vbtable，即 *Virtual Base
+Table*\ 。
+
+Win11 拖动浏览器闪屏问题
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+打开浏览器设置，搜索 ``硬件加速`` 然后关闭该功能即可。
+
+.. _参考文献-1:
+
+参考文献
+~~~~~~~~
+
+1. `moyang <https://ww2.ii.uj.edu.pl/~kapela/pn/cpp_vtable.html>`__.\ `VTable
+   Notes on Multiple Inheritance in GCC C++ Compiler
+   v4.0.1 <https://gist.github.com/moyang/1b7726c6d2df459ef73a717a56a0abfe>`__\ [EB/OL].
+
+2. StackOverflow.\ `What is the VTT for a
+   class? <https://stackoverflow.com/questions/6258559/what-is-the-vtt-for-a-class>`__\ [EB/OL].
+
+3. CSDN博客.\ `C++虚函数的底层实现原理详解 <https://blog.csdn.net/lewele001/article/details/120198316>`__\ [EB/OL].
+
+4. 博客园.\ `C/C++杂记：运行时类型识别（RTTI）与动态类型转换原理 <https://www.cnblogs.com/malecrab/p/5574070.html>`__\ [EB/OL].
+
+5. ITeYe.\ `C++
+   对象内存模型 <https://www.iteye.com/blog/tcspecial-2425028>`__\ [EB/OL].
+
+.. _2vue-框架:
+
+2、Vue 框架
+-----------
+
+Vue.js 前端框架由尤雨溪创建于 2013 年，这里的 *vue* 是 *view*
+的法语单词；2015 年 *Dragon Ball*
+版本发布迎来众多开发者的关注，并于同年开始正式进入前端框架体系第一梯队。Vue
+是一种用于构建用户界面的自底向上逐层应用的渐进式框架。其核心库只关注视图层，不仅易于上手，还便于与第三方库或既有项目整合。其优点有：体积小、运行效率高、双向数据绑定以及技术生态丰富等。
+
+.. _21-基础知识:
+
+2.1 基础知识
+~~~~~~~~~~~~
+
+全家桶
+^^^^^^
+
+Vue
+项目目录：\ ``build``\ ，\ ``config``\ ，\ ``node_modules``\ ，\ ``src``\ ，\ ``static``\ ，\ ``test``\ ，\ ``index.html``\ ，\ ``package.json``\ ，\ ``README.md``
+以及 ``.xxxx`` 文件。解释一下，下文提到的 Webpack
+是一个模块打包器，其主要目标是将 JavaScript
+文件打包在一起，打包后的文件用于在浏览器中使用。每个文件夹的功能列表如下：
+
+|  **build** Webpack 项目构建相关代码；
+|  **config** 包括端口号等在内的配置目录；
+|  **node_modules** ``npm`` 加载的项目依赖模块；
+|  **src** 包含了几个目录及文件；
+|  **static** 静态资源目录，如图片、字体等；
+|  **test** 初始测试目录，可删除；
+|  **index.html** 首页入口文件，可以添加一些 meta 信息或统计代码之类；
+|  **package.json** 项目配置文件；
+|  **README.md** MarkDown 格式的项目说明文件；
+|  **.xxxx** 包括语法配置，git 配置等在内的一些配置文件。
+
+相关的详细介绍如下（由于版本实时更新和你选择安装的不同（这里列出的是模板为webpack的目录结构），所以你看到的有可能和下边的有所差别）：
+
+.. code:: c
+
+   vue-cli
+   ├─ build                          // ├─ 项目构建(webpack)相关代码
+   │  ├─ build.js                    // │  ├─  生产环境构建代码
+   │  ├─ check-version.js            // │  ├─  检查node、npm等版本
+   │  ├─ dev-client.js               // │  ├─  热重载相关
+   │  ├─ dev-server.js               // │  ├─  构建本地服务器
+   │  ├─ utils.js                    // │  ├─  构建工具相关
+   │  ├─ webpack.base.conf.js        // │  ├─  webpack基础配置
+   │  ├─ webpack.dev.conf.js         // │  ├─  webpack开发环境配置
+   │  └─ webpack.prod.conf.js        // │  └─  webpack生产环境配置
+   ├─ config                         // ├─ 项目开发环境配置
+   │  ├─ dev.env.js                  // │  ├─ 开发环境变量
+   │  ├─ index.js                    // │  ├─ 项目一些配置变量
+   │  ├─ prod.env.js                 // │  ├─ 生产环境变量
+   │  └─ test.env.js                 // │  └─ 测试环境变量
+   ├─ node_modules                   // ├─ 项目开用到的包（可忽略）
+   ├─ src                            // ├─ 源码目录
+   │  ├─ components                  // │  ├─ vue 公共组件
+   │  ├─ router                      // │  ├─ vue-router 路由管理器    
+   │  ├─ store                       // │  ├─ vuex 的状态管理
+   │  ├─ App.vue                     // │  ├─ 页面入口文件
+   │  └─ main.js                     // │  └─ 程序入口文件，加载各种公共组件
+   ├─ static                         // ├─ 静态文件，比如一些图片，json数据等
+   │  └─ data                        // │  └─ 群聊分析得到的数据用于数据可视化
+   ├─ .babelrc                       // ├─ ES6语法编译配置
+   ├─ .editorconfig                  // ├─ 定义代码格式
+   ├─ .gitignore                     // ├─ git上传需要忽略的文件格式
+   ├─ index.html                     // ├─ 入口页面
+   └─ package.json                   // └─项目基本信息
+
+Vue 全家桶包括 ``vue-cli``\ 、\ ``vue-router`` 以及 ``vuex`` 。其中
+``vue-cli`` 是 Vue 官方出品的快速构建单页应用的脚手架，CLI 是 Comannd
+Line Interface 的缩写，里面集成了
+webpack，npm，nodejs，babel，vue，vue-router 等；\ ``vue-router`` 是
+Vue.js 官方的路由管理器，它和 Vue.js
+的核心深度集成，让构建单页面应用变得易如反掌；\ ``vuex`` 是一个专门为
+Vue.js 设计的集中式状态管理架构，即在 Vue 组件中需要共用的 Data
+属性。比如几个页面都要显示用户名称和用户等级，如果不把这些属性设置为状态，那每个页面遇到后都会到服务器进行查找计算，返回后再显示；在中大型项目中会有很多共用的数据，这就是
+vuex 的设计初衷。
+
+核心概念
+^^^^^^^^
+
+这里介绍几个 Vue.js 的核心概念，以便于后面进行 Vue
+模板语法开发时充分理解相关代码含义：
+
+1. **响应式数据绑定**\ 。当数据发生变化的时候自动更新视图，即双向数据同步；其监控对数据的操作，这里利用的是
+   ES6 中 ``Object.definedProperty`` 的 ``setter/getter`` 代理数据。
+
+2. **组合的视图组件**\ 。即页面最终映射为一个组件树，采用树形数据结构进行设计，方便维护与重用。
+
+3. **虚拟DOM**\ 。在内存中生成与真实 DOM
+   与之对应的数据结构，这个在内存中生成的结构称之为虚拟
+   DOM。当数据发生变化时，能够智能的计算出重新渲染组件的最小代价并应用到
+   DOM 操作上。
+
+4. **MVVM**\ 。MVVM 是前端开发的模式 Model-View-View Model
+   的缩写，核心是提供对 View 和 ViewModel 的双向数据绑定，这使得
+   ViewModel 的状态改变可以自动传递给 View，即所谓的数据双向绑定。这里的
+   M 指代数据层，也就是指数据（前端是js）；V 指代 DOM 层或用户界面；VM
+   含义是处理数据和界面的中间层，在这里指代 Vue 的功能。
+
+5. **EL**\ 。Expression Language 表达式语言取自 ECMAScript
+   标准，而通常提到这个词时将会自动关联到 JSP 2.0 引入的 EL
+   简化表达式的方法 ``${}`` ，Vue
+   也采用了类似的模式，不过是双扩号形式：\ ``{{}}``\ 。
+
+6. **声明式渲染**\ 。Vue.js
+   的核心是一个允许采用简洁的模板语法来声明式地将数据渲染进 DOM 的系统。
+
+渲染分为命令式渲染和声明式渲染。其中\ **命令式渲染**\ 命令程序去做什么，程序就会跟着命令去一步一步执行；而\ **声明式渲染**\ 只需要告诉程序想要什么效果，其他的交给程序来做即可。
+
+安装方法
+^^^^^^^^
+
+Vue 源码托管于 GitHub 平台上，使用则一般使用 CDN 网站的 js 代码引用或者
+Node.js 的 ``npm`` 安装命令；如果需要使用 vue-cli
+版本则需要使用下面的命令：
+
+.. code:: shell
+
+   npm install -g @vue/cli
+   # OR
+   yarn global add @vue/cli
+
+安装后可以在命令行中访问 ``vue`` 命令来检测 Vue 是否成功安装。升级全局
+CLI 包时需要使用 ``npm`` 的更新命令，而升级项目依赖则需要使用
+``vue upgrade`` 命令。
+
+   ``{{xxx}}`` 取值有个弊端，当网速很慢或 javascript
+   出错时，会在页面显示 ``{{xxx}}``\ ，Vue 提供的 ``v-text``
+   可以解决这个问题。
+
+安装后使用另一种初始化项目方式
+``vue init <template-name> <project-name>`` 时将会遇到 Command vue init
+requires a global addon to be installed. 的问题，这时需要安装一下
+``cli-init`` ：
+
+.. code:: shell
+
+   npm install -g @vue/cli-init
+
+生命周期
+^^^^^^^^
+
+Vue
+实例有一个完整的生命周期：\ *1.\ 开始创建、\ 2.\ 初始化数据、\ 3.\ 编译模板、\ 4.\ 挂载
+Dom、\ 5.\ 渲染→更新→渲染、\ 6.\ 销毁*\ 等一系列过程，我们称这是 Vue
+的生命周期。通俗说就是 Vue
+实例从创建到销毁的过程，就是生命周期。每一个组件或者实例都会经历一个完整的生命周期，总共分为三个阶段：初始化、运行中、销毁。
+
+.. figure:: C:\Users\xxgcy\Documents\Jaxin's%20question%20list\pic\202111\vue-lifecycle.svg
+   :alt: 
+
+Vue 实例的生命周期中为开发者提供了 8 个钩子函数，这些函数称为 Hook
+Function，能够在某个阶段给开发者提供一个做某些处理的机会：
+
+1. | **beforeCreate**
+   | 组件实例刚创建还未实例化之前，执行一些初始化操作，如加载动画。
+
+2. | **created**
+   | 组件实例化完成，属性已绑定；但 DOM 还未生成，\ ``$el``
+     属性仍不存在，页面未被展示；可结束加载动画、发起异步网络请求。
+
+3. | **beforeMount**
+   | 完成 DOM 配置，模板已被编译，把 ``data`` 里的数据和模板生成
+     HTML；此时还没有挂载 HTML 到页面上。
+
+4. | **mounted**
+   | 将上面编译好的 HTML 内容替换 ``el`` 属性指向的 DOM 对象；调用后 DOM
+     构建完成并显示页面；可发起网络请求。
+
+5. | **beforeUpdate**
+   | Vue 发现 ``data``
+     数据发生改变时触发对应组件的重新渲染；调用时页面还未修改，但虚拟DOM已修改。
+
+6. | **updated**
+   | 组件更新并执行完此方法后，修改的页面展现出来，即 View
+     重新渲染，数据更新。
+
+7. | **beforeDestroy**
+   | 组件实例销毁前调用，实例仍完全可用。
+
+8. | **destroyed**
+   | 在 Vue
+     实例销毁后调用；调用后实例指示的所有东西都会解绑定，所有的时间监听器会被移除，所有的子实例也对应销毁。
+
+.. _22-扩展内容:
+
+2.2 扩展内容
+~~~~~~~~~~~~
+
+Tomcat 服务器
+^^^^^^^^^^^^^
+
+Tomcat 服务器是一个免费的开放源代码的 Web
+应用服务器，属于轻量级应用服务器，在中小型系统和并发访问用户不是很多的场合下被普遍使用，是开发和调试
+JSP 程序的首选。对于一个初学者来说，可以这样认为，当在一台机器上配置好
+Apache 服务器，可利用它响应 HTML 页面的访问请求。实际上 Tomcat 是 Apache
+服务器的扩展，但运行时它是独立运行的，所以 Tomcat 实际上是作为一个与
+Apache 独立的进程单独运行的。
+
+Nginx 反向代理
+^^^^^^^^^^^^^^
+
+这里有几个重要的概念：
+
+1. **代理**\ 。在 Java
+   设计模式中，代理模式是这样定义的：给某个对象提供一个代理对象，并由代理对象控制原对象的引用。简单来说就是如果我们想做什么但又不想直接去做，这时候可以选择找另外一个人帮我们去做。
+
+2. | **代理服务器**\ 。客户机在发送请求时，不会直接发送给目的主机，而是先发送给代理服务器，代理服务接受客户机请求之后，再向主机发出，并接收目的主机返回的数据，存放在代理服务器的硬盘中，再发送给客户机。
+   | 代理服务器能够：1) 提高访问速度；2) 起到防火墙作用；3)
+     通过代理服务器访问不能访问的目标站点。
+
+3. **正向代理**\ 。正向代理服务器架设在客户机与目标主机之间，只用于代理内部网络对
+   Internet 的连接请求，客户机必须指定代理服务器，并将本来要直接发送到
+   Web 服务器上的 http 请求发送到代理服务器中。
+
+4. **反向代理**\ 。反向代理服务器架设在服务器端，通过缓冲经常被请求的页面来缓解服务器的工作量，将客户机请求转发给内部网络上的目标服务器；并将从服务器上得到的结果返回给
+   Internet
+   上请求连接的客户端，此时代理服务器与目标主机一起对外表现为一个服务器。
+
+5. **Nginx**\ 。Nginx
+   作为近年来较火的反向代理服务器，安装在目的主机端，主要用于转发客户机请求，后台有多个
+   http 服务器提供服务，nginx
+   功能就是把请求转发给后面的服务器，决定哪台目标主机来处理当前请求。
+
+.. _参考文献-2:
+
+参考文献
+~~~~~~~~
+
+1. 梁兴华.\ `Vue全家桶 <http://doc.liangxinghua.com/vue-family/1.html>`__\ [EB/OL].
+
+2. 博客园.\ `Vue全家桶（Vue-cli、Vue-route、vuex） <https://www.cnblogs.com/wyt007/p/10422316.html>`__\ [EB/OL].
+
+3. Vue.\ `Vue CLI <https://cli.vuejs.org/zh/>`__\ [EB/OL].
+
+4. CSDN博客.\ `使用Nginx实现反向代理 <https://blog.csdn.net/lishaojun0115/article/details/53200629>`__\ [EB/OL].
+
+.. _3津能燃气权限管理系统:
+
+3、津能燃气权限管理系统
+-----------------------
+
+最近有个元旦上线运行津能燃气项目，参与其中权限管理功能模块的开发。
+
+.. _31-权限管理模型:
+
+3.1 权限管理模型
+~~~~~~~~~~~~~~~~
+
+权限控制系统的原理，概述下来为：
+
+   权限控制系统就是：\ **用户在访问时，通过了解用户具有的可以进行的行为的集合，决定用户可以看到什么菜单，以及在什么菜单下能使用什么功能，并且具备什么样操作数据的能力。**
+
+常见的权限管理模型有这样几种：即自主访问控制 DAC, *Discretionary Access
+Control*\ ；强制访问控制 MAC, Mandatory Access
+Control；基于角色的访问控制 **RBAC**, *Role-Based Access Control*
+和基于属性的权限控制 ABAC, *Attribute Base Access Control* 等
+。在具体介绍之前需要了解一些术语：
+
+|  **用户** 发起操作的主体； User
+|  **对象** 操作所针对的客观对象，如订单数据或图片文件； Subject
+|  **权限控制列表** 用来描述权限规则或用户和权限之间关系的数据表； ACL,
+  Access Contol List
+|  **权限** 用来指代对某种对象的某一种操作，列如添加文章； Permission
+|  **权限标识** 权限代号，如 ARTICLE_ADD 指代添加文章权限； Permission
+  ID![]
+
+常见的权限管理模型
+^^^^^^^^^^^^^^^^^^
+
+**DAC**\ 。自主访问控制系统会识别用户，然后根据被操作 Subject 的 ACL
+或者权限控制矩阵（ACM: Access Control
+Matrix）的信息来决定用户的是否能对其进行哪些操作，例如读取或修改。而拥有
+Subject 权限的用户，又可以将该对象的权限分配给其他用户，所以称之为
+*Discretionary*
+自主控制。这种设计最常见的应用就是文件系统的权限设计，如微软的 NTFS。DAC
+最大缺陷就是对权限控制比较分散，不便于管理，比如无法简单地将一组文件设置统一的权限开放给指定的一群用户。
+
+**MAC**\ 。强制访问控制是为了弥补 DAC 权限控制过于分散的问题而诞生的。在
+MAC
+的设计中，每一个对象都都有一些权限标识，每个用户同样也会有一些权限标识，而用户能否对该对象进行操作取决于双方的权限标识的关系，这个限制判断通常是由系统硬性限制的。比如在影视作品中我们经常能看到特工在查询机密文件时，屏幕提示需要“\ *无法访问，需要一级安全许可*\ ”，这个例子中，文件上就有“\ *一级安全许可*\ ”的权限标识，而用户并不具有。MAC非常适合机密机构或者其他等级观念强烈的行业，但对于类似商业服务系统，则因为不够灵活而不能适用。
+
+**RBAC**\ 。角色访问控制是在 DAC 和 MAC 的基础上创建的。如前文所述 DAC
+的权限完全自主，权限管控下放到具体 User 身上；MAC
+权限管控实行强制，由系统管理员统一处理。RBAC 的设计介于 DAC 和 MAC
+之间，在其逐渐应用中成为了迄今为止最为普及的权限设计模型。RBAC
+在用户和权限之间引入了 **角色 Role** 的概念。
+
+**ABAC**\ 。属性访问控制被一些人称为权限系统设计的未来。对于普通系统来说
+RBAC 完全适用，但当其遇到一个大生态而形成一个庞大的 RBAC
+时，其在使用多种方式的多维度权限控制时就显得效率很低，系统需要不断增加角色、不断设定等级去满足权限需求；且如此庞大的权限模型维护也愈加艰难。由此诞生了基于属性制定策略来动态判断授权的
+ABAC，相当于在权限控制系统中加入了 ``IF-THEN``
+的条件判断，以避免角色分化导致的诸多问题。
+
+   ABAC 有时也被称为基于策略的访问控制 PBAC, *Policy-Based Access
+   Control* 或基于声明的访问控制 CBAC, *Claims-Based Access Control*\ 。
+
+所以本文将着墨于最后两种权限设计 PBAC 和 ABAC
+来展开相关的权限控制系统技术实施路线。
+
+RBAC 角色访问控制
+^^^^^^^^^^^^^^^^^
+
+按照 RBAC 的设计可以分为 RBAC0、RBAC1、RBAC2 和 RBAC3 三个权限架构层级。
+
+1. **RBAC0** 是 RBAC
+   的基础模型，其提供了用户、角色、权限的双重多对多关系，即
+   User\ :math:`\leftrightarrow`\ Role\ :math:`\leftrightarrow`\ Permission
+   链中的相邻两个表都是多对多的关联关系。
+
+2. **RBAC1** 就是在 RBAC0 的基础上添加了 Hierachical Role
+   角色继承的概念，给 RBAC0
+   添加了上下级关系，这种继承可以分为允许多继承的一般继承关系和需要严格保证树型结构的受限继承关系。
+
+3. **RBAC2**
+   添加了责任分离关系，其规定了权限被赋予角色或角色被赋予用户时以及当用户在某一时刻激活一个角色时，所应遵循的强制性规则；责任分离包括静态责任分离和动态责任分离。相应的强制性规则主要包括：互斥角色、基数约束和先决条件角色。
+
+4. **RBAC3** 是最全面的 RBAC 权限管理模型，其整合了 RBAC0、RBAC1 和
+   RBAC2，为角色添加了用户组、组织部门和职位等角色关联体系，并融合了
+   RBAC1 的上下级关系和 RBAC2 的规则约束。
+
+.. _32-shiro-安全框架:
+
+3.2 Shiro 安全框架
+~~~~~~~~~~~~~~~~~~
+
+通过对参考文献 5 中的开源权限管理系统 ``人人开源``
+进行编译并运行，可以发现其对菜单的权限控制存储在了数据表 ``sys_menu``
+中；在字段 ``perms`` 中存储了一些形如 ``sys:schedule:save``
+的字符串通配符权限。进一步进行资料查找可知，这种字符串格式通常是在 Shiro
+安全框架中进行设计的。
+
+   Apache Shiro 是一个开源的 Java
+   安全框架，可以用于执行身份验证、授权、密码和会话管理等操作，其中的单词
+   Shiro 是日语的“城”的发音。2004 年，Les Hazlewood 和 Jeremy Haile 创办
+   Shiro 的前身 Jsecurity；随后在 2008 年 Jsecurity 项目被贡献给 Apache
+   软件基金会并更名为 Shiro；2010 年，Shiro 社区发布 1.0 版本并成为
+   Apche 软件基金会顶级项目。
+
+Shiro 有三个核心组件：Subject、SecurityManager 和 Realms，分别代表着
+Shiro 的 ``当前操作用户``\ 、\ ``安全管理器`` 以及
+``安全数据连接域``\ 。三者之间的关系如下图所示，可以看到应用代码直接交互的对象是
+Subject，亦即 Shiro 的对外 API 核心就是 Subject。
+
+核心组件
+^^^^^^^^
+
+其中，\ *authentication* 译为身份认证/登录，\ *authorization*
+译为授权或权限认证，\ *cryptography* 译为加密。LDAP 是轻型目录访问协议
+*Lightweight Directory Access Protocol* 的缩写。其每个 API 的含义如下：
+
+1. **Subject**\ ：主体。代表了当前
+   “用户”，这个用户不一定是一个具体的人，与当前应用交互的任何东西都是
+   Subject，如网络爬虫，机器人等；即一个抽象概念；所有 Subject 都绑定到
+   SecurityManager，与 Subject 的所有交互都会委托给
+   SecurityManager；可以把 Subject 认为是一个门面；SecurityManager
+   才是实际的执行者。
+
+2. **SecurityManager**\ ：安全管理器。即所有与安全有关的操作都会与
+   SecurityManager 交互；且它管理着所有 Subject；可以看出它是 Shiro
+   的核心，它负责与后边介绍的其他组件进行交互，如果学习过
+   SpringMVC，你可以把它看成 DispatcherServlet 前端控制器。
+
+3. **Realm**\ ：域。Shiro 从 Realm
+   获取安全数据（如用户、角色、权限），就是说 SecurityManager
+   要验证用户身份，那么它需要从 Realm
+   获取相应的用户进行比较以确定用户身份是否合法；也需要从 Realm
+   得到用户相应的角色 / 权限进行验证用户是否能进行操作；可以把 Realm
+   看成 DataSource，即安全数据源。
+
+Shiro 不像 Spring Security 框架那样复杂；若采用 RBAC
+角色访问控制，则仍需确保
+User\ :math:`\leftrightarrow`\ Role\ :math:`\leftrightarrow`\ Permission
+链中任意两者间都是多对多的关系，该过程是在 Realm
+中进行实现的。其权限操作如下：
+
+Shiro 中用户作为 Subject 是代码能够控制的主体类，SecurityManager
+则可以根据主体携带信息进行认证和授权情况的判定；当然，Shiro 也提供了
+``hasRole()`` 和 ``isPermitted()``
+这样的函数对角色和响应的权限进行具体的判定，根据这二者的使用情况会将角色、权限的概念区分为\ **基于角色的**\ 隐式角色—粗粒度权限和\ **基于资源的**\ 显示角色—细粒度权限这样的进一步分类。
+
+字符串通配符权限
+^^^^^^^^^^^^^^^^
+
+关于 Permission
+的字符串通配符权限需要简单了解一下其语法机制，其语法规则如下：
+
+.. code:: shell
+
+   [资源标识符]:[操作]:[对象实例ID]   # 字符串通配符权限
+
+语法确定对哪个资源的哪个实例可以进行什么操作。其中，\ ``:``
+标识资源/操作/实例的分割，在资源标识符中可以存在 ``sys:user``
+这样的形式；\ ``,`` 标识权限操作的分割操作；\ ``*``
+标识任意资源/操作/实例。
+
+.. _33-安装-sql-server:
+
+3.3 安装 SQL Server
+~~~~~~~~~~~~~~~~~~~
+
+提示错误信息 “SQLServer 出现以下错误，指定的用户不存在”
+时，需要在安全性选项卡中，把 SQLServer 身份验证方式改成 SQLServer 和
+Windows，然后新建立一个用户，授权响应的数据库及权限，登录时填写建立的用户名和密码登录就行了。
+
+.. _参考文献-3:
+
+参考文献
+~~~~~~~~
+
+1. 简书.\ `权限系统设计模型分析（DAC，MAC，RBAC，ABAC） <https://www.jianshu.com/p/ce0944b4a903>`__\ [EB/OL].
+
+2. CSDN博客.\ `安全系列之权限控制模型 <https://blog.csdn.net/wannuoge4766/article/details/106733715>`__\ [EB/OL].
+
+3. 博客园.\ `扩展RBAC用户角色权限设计方案 <https://www.cnblogs.com/zwq194/archive/2011/03/07/1974821.html>`__\ [EB/OL].
+
+4. 知乎.\ `如何设计网站权限系统？ <https://www.zhihu.com/question/20313385>`__\ [EB/OL].
+
+5. Gitee.\ `人人开源 <https://gitee.com/renrenio/renren-security>`__\ [EB/OL].
+
+6. 博客园.\ `MySQL8.0.20安装教程，MySQL8.0.20安装详细图文教程 <https://www.cnblogs.com/2020javamianshibaodian/p/12933674.html>`__.[EB/OL].
+
+7. W3Cschool.\ `Shiro
+   简介 <https://www.w3cschool.cn/shiro/co4m1if2.html>`__\ [EB/OL].
+
+8. CSDN博客.\ `shiro:hasPermission 标签
+   ：验证当前用户是否拥有指定权限 <https://blog.csdn.net/dxyzhbb/article/details/102500997>`__\ [EB/OL].
+
+9. CSDN博客.\ `SQL Server 2012
+   安装教程 <https://blog.csdn.net/gengkui9897/article/details/89301494>`__\ [EB/OL].
+
+.. _4能源大屏系统二三维联动:
+
+4、能源大屏系统二三维联动
+-------------------------
+
+远程连接问题使用 RealVNC，GeoServer 的 WMS 服务加入 Mars3D 要增加
+parameters 属性，监听鼠标滚轮事件可以用 Cesium 的
+ScreenSpaceEventHandler 控制器。
+
+.. _41-网页初始化加载卡顿:
+
+4.1 网页初始化加载卡顿
+~~~~~~~~~~~~~~~~~~~~~~
+
+这是因为网页初始化加载时给加载了下面一行的 bootstrap，给注释掉就行了。
+
+.. code:: html
+
+   <link href="https://cdn.bootcss.com/bootstrap/4.0.0/css/bootstrap.min.css" rel="stylesheet">
+
+如此，解决网页初始化时的卡顿问题。
+
+远程连接问题
+^^^^^^^^^^^^
+
+**问题1、发生身份验证错误，要求的函数不受支持**\ 。
+
+解决方法：
+
+   | 本地组策略：
+   | 计算机配置>管理模板>系统>凭据分配>加密Oracle修正；
+   | 选择启用并选择易受攻击。
+
+如果是Win10家庭版需要对注册表进行操作：
+
+1. | 打开注册表然后在左侧栏中依次选择：
+   | 计算机→ HKEY_LOCAL_MACHINE → SOFTWARE→ Microsoft→ Windows→
+     CurrentVersion→ Policies→ System→ CredSSP→Parameters。
+
+2. 然后在右侧栏的空白处点击右键→新建→DWORD（32位）值，然后重命名成
+   AllowEncryptionOracle。双击打开 AllowEncryptionOracle，将数值数据改成
+   2，最后点击确定。
+
+3. 有的用户 System 下没有 CredSSP 文件夹，这时用户自行创建 CredSSP 和
+   Parameters 即可。
+
+**问题2、您的凭据不工作 之前用于连接到XX的凭据无法工作。**
+
+解决方法：
+
+   打开本地组策略编辑器（运行gpedit.msc），计算机配置→管理模板→系统→凭据分配→允许分配保存的凭据用于仅NTLM服务器身份验证：
+
+   右击→编辑：选择“已启用”→点击“显示按钮”→输入值为：TERMSRV/*。保存设置后，运行
+   gpupdate /force 对组策略进行强制刷新，即可测试是否可以解决问题。
+
+至此，解决远程连接问题。折腾半天，发现该问题还是无法解决，故放弃使用
+Window 自带的远程连接软件，退而使用 **RealVNC 软件**
+进行远程控制，控制效果还行，目前使用的是 6.7 的 Server 和 6.17 的
+Viewer。
+
+.. _42-图层配置:
+
+4.2 图层配置
+~~~~~~~~~~~~
+
+Geoserver 图层加载
+^^^^^^^^^^^^^^^^^^
+
+在 Mars3D 中加载 geoserver 图层的 wms 服务配置如下：
+
+.. code:: json
+
+   {
+       "pid": 5019,
+       "name": "二维管网",
+       "type": "wms",
+       "url": "http://172.16.86.11:8080/geoserver/wms",
+       "layers": "NY2000_AllLayer",
+       "crs": "EPSG:4326",
+       "parameters": {
+           "transparent": "true",
+           "format": "image/png"
+       },
+       "popup": "all",
+       "visible": false,
+       "flyTo": true
+   },
+
+解决了二维信息的加载问题之后，需要考虑换热站信息的显示、底层管网信息的遮盖等相关问题。经和志哥确认，这个接入的地图是符合要求的，那么剩下的问题就是加载底图了。
+
+电子地图与三维模型切换
+^^^^^^^^^^^^^^^^^^^^^^
+
+研究一下 ArcGIS Server
+发布切片服务吧。好的，图层发布完毕。但这种形式的二维联动效果他们似乎并不满意，俺需要想想怎么搞下这个内容。
+
+.. code:: javascript
+
+   /**
+    * 监听鼠标滚轮事件执行视距缩放控制
+    **/
+   let handler = new Cesium.ScreenSpaceEventHandler(viewer.scene.canvas);
+   handler.setInputAction(click => {
+       let height = viewer.camera.positionCartographic.height;
+       console.log("Height is: " + height);
+   }, Cesium.ScreenSpaceEventType.WHEEL);
+
+修改模型颜色：
+
+.. code:: javascript
+
+   /**
+    * 修改管线模型的颜色为黄色，修改其颜色混合模式为 MIX
+    * 参考链接：
+    * https://sandcastle.cesium.com/?src=3D%20Models%20Coloring.html
+    */
+   viewer.scene.primitives._primitives.map((val)=>{
+       if(!val.name) return;
+       if(val.name.indexOf("区块") !== -1){
+           val.style = new Cesium.Cesium3DTileStyle({
+               color: "rgba(255, 215, 0, 1.0)"
+           });
+           val.colorBlendMode = Cesium.ColorBlendMode.MIX;
+           val.colorBlendAmount = 0.8;
+       }
+   });
+
+所以 Cesium 本身还是有很多东西的，不必拘泥于第三方所创建的依赖。
+
+.. _43-各层级围栏信息显示:
+
+4.3 各层级围栏信息显示
+~~~~~~~~~~~~~~~~~~~~~~
+
+围栏数据需要二维系统圈出来数据问题，另外还有全景名字不对的问题，需要仔细和能源集团确认一下。
+
+.. _44-解决-checkbox-问题:
+
+4.4 解决 checkbox 问题
+~~~~~~~~~~~~~~~~~~~~~~
+
+**！！！重大BUG**\ 。不管怎么回事，只要正确执行至 techbox.js 之后，点击
+checkbox 的状态就会影响当前文档中的所有标签，所有标签都被添加了一个
+``display:none`` 的属性，就很狗 MD。现在的思路是依次注释 techbox 后面的
+js 文件，看看到底是哪个文件劫持了我们的 ``checkbox`` 小宝贝。
+
+   [STRIKEOUT:``techbox.js``]\ ，\ [STRIKEOUT:``accordion.js``]\ ，\ [STRIKEOUT:``EarthSDKLayer.js``]\ ，\ [STRIKEOUT:``data/jkcs.js``]
+
+啊 F**k，发现了，最后剩下的是 ``GeoDataQuery.js``
+文件，问题就出在它身上了，该文件主要提供了 ``jQuery``
+的异步请求与回调函数，猜测问题可能出现在诸多回调函数里面。进一步调试发现并非如此，js
+逐步运行后先后调用了 ``queryTree()`` 和 ``queryCNJ()`` 两个函数，注释掉
+``queryTree()`` 中的 ``initTree2()``
+发现可以运行，故进一步缩小问题范围为 ``techbox.js`` 文件中的
+``initTree2()`` 函数中的 ``techEventRegister()`` 函数。
+
+哎呀，感叹一下当初写这个乱七八糟的 ``techEventRegister``
+时遵循了最新代码放到最上面的原则，所以注释掉代码的第一块儿就能运行了。日，所以问题出在
+``$("#optgroup_clickable_chosen").mouseleave()``
+所触发的事件函数上了。并不是！！好烦啊。
+
+最终确定\ :math:`\rightarrow`
+**模糊查询输入框**\ 。该事件绑定出现了问题，不应该用 ``$("input")``
+这一事件绑定页面上所有的 input 标签，修改一下为其添加一个限制。
+
+修复模糊搜索功能
+^^^^^^^^^^^^^^^^
+
+经测试发现，模糊搜索功能不能用了。现予以修复，稍后梳理下模糊搜索的逻辑。
+
+逻辑梳理完毕，发现问题代码如下所示：
+
+.. code:: javascript
+
+   // 模糊查询输入框，输入隐藏功能
+   $("input").bind("input propertychange",function(){
+       let value = this.value;
+       let id = hrz_id + " div";    
+       if(value === '' || value.indexOf(' ')!== -1 ) $(id).css("display", "block");
+       else $(id).not("div:contains('" + value + "')").css("display", "none");
+   })
+
+有三个问题需要解决：
+
+.. code:: javascript
+
+   $(".product-wrap input").bind(         // 问题1 为控件添加 product-wrap 域限制
+       "input propertychange",
+       function(){
+           if(hrz_id === "") return;      // 问题2 ID 为空时退出避免压盖所有 div 标签
+           let value = this.value;
+           let id = hrz_id + " div";
+           $(id).css("display", "block");  //问题3 首先把所有内容都显示出来
+           if(value === '' || value.indexOf(' ')!== -1 ) $(id).css("display", "block");
+           else $(id).not("div:contains('" + value + "')").css("display", "none");
+   })
+
+解决完上述问题之后就恢复了模糊搜索功能，其中还有一个问题就是默认的复选框下
+``hrz_id`` 初始值为空的问题了，建议为复选框添加一个 “请选择机构名称”
+提示框，解决初始化选择问题。
+
+.. code:: javascript
+
+   select.options.add(new Option('-- 请选择机构名称 --','hide'));
+
+输入时触发 mouseleave 事件
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+在 ``div`` 中的 ``input`` 中输入文字时会触发该 ``div`` 的 ``mouseleave``
+事件，通过网上查询，发现该问题可以通过更改事件类型解决，参照参考文献 2
+进行解决时发现无法解决该问题。
+
+.. code:: javascript
+
+   mouseleave(function(){})//修改为 mouseout 事件无法解决
+
+Autocomplete input triggers mouseleave event.
+没有找到解决方案，暂且放放吧，后面再解决。
+
+子控件/父控件的事件
+^^^^^^^^^^^^^^^^^^^
+
+在项目中，子控件点击后会触发父控件的事件，规避可用
+``event.stopPropagation()``\ 。本项目中不应规避，因为该项目中的开关按钮过于大了，所以要穿透控件到底层。
+
+由此，确定最终的代码实现逻辑。不过需要明确的是，控件事件的触发，是先触发父控件的事件，再触发子控件的事件，所以最后的事件逻辑应该放在管线中自己控制，即：
+
+.. code:: javascript
+
+   点击管线开关-->图层父控件div触发事件关闭所有图层-->触发子控件checkbox事件-->管线图层开启/关闭
+
+.. _参考文献-4:
+
+参考文献
+~~~~~~~~
+
+1. CSDN博客.\ `Cesium
+   鼠标滚轮改变地图层级（height）及视角改变监听 <https://blog.csdn.net/qq_29808089/article/details/110951363>`__\ [EB/OL].
+
+2. CSDN博客.\ `使用 layer弹出里面有输入框时输入中文会触发 mouseleave
+   事件而关闭弹窗 <https://blog.csdn.net/vipp666/article/details/84937673>`__\ [EB/OL].
+
+.. _5发改委承接非首都项目二期:
+
+5、发改委承接非首都项目二期
+---------------------------
+
+本次需求更新包括新增评价指标体系和添加签约信息表等两部分。
+
+.. _51-新增评价指标体系:
+
+5.1 新增评价指标体系
+~~~~~~~~~~~~~~~~~~~~
+
+区级评分累和小于 100，第三项满分 50 但各小项加起来才 40
+分，就很奇怪了嘿。后经开会确认，评价指标体系表格并不完整，应以后期完整的数据表格为标准进行相应的设计。
+
+解析 JSON 字符串
+^^^^^^^^^^^^^^^^
+
+用到 com.alibaba.fastjson.JSONObject 包，也就是阿里巴巴提供的 FastJSON
+工具，使用其解析字符串类型时要放到 ``try`` 和 ``catch`` 中以避免 JSON
+字符串本身故障引起的问题。
+
+.. code:: java
+
+   JSONObject obj_new = new JSONObject();              // 新建 JSONObject 对象
+   JSONObject obj_parse = JSONObject.parseObject(str); // 解析为 JSONObject 对象
+
+删除 JSON 键值对
+^^^^^^^^^^^^^^^^
+
+删除键值对，直接使用：
+
+.. code:: java
+
+   JSONObject.remove("key");
+   JSONObject obj1 = JSONObject.fromObject(map);
+   JSONObject obj2 = obj1.discard("key"); //key 为指定的键
+
+构建的指标评价体系原设计按照数据表格中的手动填写字段进行设计，但后来某人说要存储所有字段，故努而采用单字段调整方案存储所有字段信息，存储的内容及字段名称一切以前端为准。
+
+toJSONString 丢失部分属性问题
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+这里解决一下 FastJson 包的 ``JSONObject.toJSONString()``
+导致部分属性丢失问题，该问题的发生原因是该包转换 JSON 字符串时自动将
+null 值给忽略掉了，即：
+
+.. code:: java
+
+   JSONObject.toJSONString(Object object,SerializerFeature… features)
+
+Fastjson 的 SerializerFeature序列化属性有：
+
+   | ``QuoteFieldNames`` 输出 key 时是否使用双引号，默认为 true
+   | ``WriteMapNullValue`` 是否输出值为 null 的字段，默认为 false
+   | ``WriteNullNumberAsZero`` 数值字段如果为 null，输出为0，而非 null
+   | ``WriteNullListAsEmpty`` List字段如果为 null，输出为[]，而非 null
+   | ``WriteNullStringAsEmpty`` 字符类型字段如果为 null，输出为”“，而非
+     null
+   | ``WriteNullBooleanAsFalse`` Boolean字段如果为
+     null，输出为false，而非 nul
+
+故而，只需要在使用该函数时，将 null 值给包进去就可以了。
+
+.. code:: java
+
+   JSONObject.toJSONString(jsonMap, SerializerFeature.WriteMapNullValue); 
+
+若依服务跨域问题
+^^^^^^^^^^^^^^^^
+
+若依微服务版使用 Nacos 托管了 ruoyi-gateway 模块的 Spring Cloud Gateway
+组件配置，所以在若依的体系中会将原有的写在 ruoyi-modules-system 中由
+``@RequestMapping("\[接口组]")``
+注解注入的接口组通过网关模式转发到对应的 ``:8080`` 端口下的 ``/system/``
+地址中，一切直接调用 URL + 接口组的方法都将引发跨域问题。
+
+所以为了避免跨域问题，在使用时，应注意使用：
+
+.. code:: java
+
+   "localhost:8080/system/[接口组]/api"
+
+替换原生代码产生的：
+
+.. code:: java
+
+   "localhost:9021/[接口组]/api"
+
+另外，在程序运行初期如果遇到跨域问题，可参考曹中奇奇哥提供的跨域问题解决方案，即：
+
+   找到 ruoyi-gateway 模块下的 config 文件夹，为其添加 CorsConfig.java
+   文件（若没有），文件内容如下：
+
+.. code:: java
+
+   @Configuration
+   public class CorsConfig{
+       @Bean
+       public CorsWebFilter corsWebFilter(){
+           CorsConfiguration config = new CorsConfiguration();
+           config.addAllowedMethod("*");
+           config.addAllowedOrigin("*");
+           config.addAllowedHeader("*");
+           UrlBasedCorsConfigurationSource source = 
+               new UrlBasedCorsConfigurationSource(new PathPatternParser());
+           source.registerCorsConfiguration("/**", config);
+           return new CorsWebFilter(source);
+       }
+   }
+
+至此，即可完备的解决本次遇到的若依服务跨域问题。
+
+单字段存储的更新问题
+^^^^^^^^^^^^^^^^^^^^
+
+但字段存储原有若干字段，更新时依据传入的原始字段更新数据库中的相应内容；数据库的初始状态必须拥有这些字段名称的正确结构，或者为其创建一个还原初始状态的函数或服务，将其所有数据还原为初始状态。这样在数据库迁移时就可以还原一个正确的初始状态了；也可以为用户填写提供方便。需要的更新逻辑如下：
+
+整理下来就是：
+
+1. **读取解析**\ 。读取传入字符串，解析其中的 ID
+   字段名，随后从数据库中调取相应记录的字符串并还原为 JSON
+   对象，后续修改操作将在此数据库 JSON 对象 :math:`S` 上进行。
+
+2. **修改对象**\ 。解析传入的 JSON 对象为 :math:`T`\ ，核验数据库 JSON
+   对象 :math:`S` 中是否 ``contains`` 对象 :math:`T`
+   的键值对，如若包含则对应更新原有的 JSON 对象
+   :math:`S`\ ，修改后的对象更新为 :math:`S'`\ 。
+
+3. **对象存储**\ 。将修改后的对象 :math:`S'` 转换为 JSON
+   字符串存储到数据库中。
+
+.. _52-添加签约信息:
+
+5.2 添加签约信息
+~~~~~~~~~~~~~~~~
+
+此次调整针对 “市级工作情况/区级工作情况” 下的
+“对接争取目标单位的工作成效”，将原有单表形式的目标单位工作成效信息拆分为包括：新设机构、重大项目以及签约情况等三个表，其具体的需求见下：
+
+   1、市级页面展示该目标单位的新设机构、重大项目、签约情况。
+
+   | **新设机构**\ ：机构名称、注册资金、注册时间
+   | **重大项目**\ ：项目名称、总投资、是否开工
+   | **签约情况**\ ：签约时间
+
+   2、查看详情内容展现三个具体信息表，表格内容：
+
+   | **新设机构**\ ：目标单位、新设机构名称、牵头市领导、牵头市级单位、工作责任区、注册资金、注册时间、注册地址、层级类型、业务类型、统一社会信用代码
+   | **重大项目**\ ：目标单位、落地项目、总投资（亿元）、牵头市领导、牵头市级单位、工作责任区、是否开工
+   | **签约情况**\ ：目标单位、牵头市领导、牵头市级单位、签约时间
+
+   3、前端表格相互影响：
+
+   “市级工作情况”、“区级工作情况” 页面中的 “对接争取目标单位的工作成效”
+   栏目的内容更新后，“目标单位信息” 页面中的
+   “在津分支机构布局”、“在津重点项目布局” 下的内容同步更新。
+
+   | **新设机构**\ ：“目标单位信息” 页面中的 “在津分支机构布局”
+   | **重大项目**\ ：“目标单位信息” 页面中的 “在津重点项目布局”。
+
+根据上述需求，保留原有 “对接争取目标单位的工作成效”
+表格中的相关内容为历史记录，其表格字段内容包括：序号、时间、具体成效、发起单位、操作；其中关于牵头单位、目标单位的信息在最上面由下拉框确定。
+
+分析原有表格数据结构，可以找到：
+
+==== ========================== ============= ============= ========
+名称 对接争取目标单位的工作成效 新设机构      重大项目      签约情况
+==== ========================== ============= ============= ========
+表格 fgw_gzcx                   fgw_fzjg      fgw_xmbj      未知表格
+字段 [jtcx],[szq],[sjqtdw]      [mbdw],[dwmc] [mbdw],[xmmc] 未知字段
+==== ========================== ============= ============= ========
+
+关于其他内容留待后续再予以添加。

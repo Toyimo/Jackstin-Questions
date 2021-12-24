@@ -1,0 +1,272 @@
+Question List in September, 2021
+================================
+
+🍂 We know something different, there is nowhere that can make yourself
+happy by doing nothing.
+
+走不以手，缚手走不能疾；飞不以尾，屈尾飞不能远；物之用者必待不用者。故使之见者，乃不见者也；使鼓鸣者，乃不鸣者也。尝一脔肉，知一镌之味；悬羽与炭，而知燥湿之气；以小明大。见一叶落，而知岁之将暮；睹瓶中之冰，而知天下之寒；以近论远。
+
+.. raw:: html
+
+   <html xmlns="http://www.w3.org/1999/xhtml"><head></head><body><div align="right">刘安及其门客《淮南子·说山训》</div></body></html>
+
+.. _1hello-arcgis-server:
+
+1、Hello, ArcGIS Server
+-----------------------
+
+近日来，屡次与 ArcGIS Server
+合作，发现了这个软件的好用之处，暂且记录一下。首先是关于软件的安装，Server
+是可以独立与 ArcMap
+而存在的，但是其服务发布必须依赖于服务定义文件（.sd）。
+
+.. _11--时间查询:
+
+1.1 时间查询
+~~~~~~~~~~~~
+
+1. 将 “2021-09-01” 格式的字符串字段转换为日期字段可以用字段计算器中的
+   ``cdate([日期])`` 函数；
+
+2. 按年查询时间字段可以使用参考文献 1 中关于日期的标准函数
+   ``EXTRACT(YEAR FROM “日期”)`` 来进行；而更为通用的时间查询需要用
+   ``date '2021-09-01'`` 的形式对传入字符作日期转换；
+
+3. ArcGIS Server 中 Query 的 Where 语句与 ArcMap 中的
+   “\ **按属性查询**\ ” 功能里的 Where 语句基本通用；
+
+4. 关于统计查询需要借助参考文献 2 中的 ArcGIS REST API 或类似于参考文献
+   3 中关于 ArcGIS Server 服务分组查询的相关属性如
+   GroupByFieldsForStatistics 和 OutStatices 的配置。
+
+.. _12-服务定义文件:
+
+1.2 服务定义文件
+~~~~~~~~~~~~~~~~
+
+.. _参考文献-1:
+
+参考文献
+~~~~~~~~
+
+1. ArcGIS Enterprise.\ `ArcGIS Server 中支持的 SQL
+   函数 <https://enterprise.arcgis.com/zh-cn/server/10.6/administer/windows/supported-sql-functions-in-arcgis-server.htm>`__\ [EB/OL].
+
+2. ArcGIS Developers.\ `Summarize
+   Attributes <https://developers.arcgis.com/rest/services-reference/enterprise/summarize-attributes.htm>`__\ [EB/OL].
+
+3. CSDN博客.\ `ArcGIS 10.1 for Server 服务端查询统计 -ArcGIS API for
+   Silverlight
+   实现 <https://blog.csdn.net/arcgis_all/article/details/8202748>`__\ [EB/OL].
+
+4. 简书. `ArcMap生成.sd文件，在ArcGIS
+   Server发布地图服务 <https://www.jianshu.com/p/cd89677f62bb>`__\ [EB/OL].
+
+5. ArcGIS
+   Server.\ `发布服务定义文件 <https://enterprise.arcgis.com/zh-cn/server/latest/publish-services/windows/about-service-definition-files.htm>`__\ [EB/OL].
+
+.. _2能源集团大屏展示系统:
+
+2、能源集团大屏展示系统
+-----------------------
+
+.. _21-合并-json-对象:
+
+2.1 合并 JSON 对象
+~~~~~~~~~~~~~~~~~~
+
+JavaScript 合并 JSON
+对应通常有几种方法：循环遍历法、\ ``Object.assign();``
+法、\ ``jQuery.extend()``
+法；对于简单需求而言，使用这三种方法都能达到需要的效果，而对于复杂 JSON
+来说，使用 jQuery 的 ``extend()`` 方法的第二个原型，使用深拷贝技术进行
+JSON 对象合并即可达到要求：
+
+.. code:: javascript
+
+   $.extend([deep], target, object1 [, objectN]);
+
+从结果来看，合并后的数据是完整的，并且合并后再修改源对象，并没有影响到合并结果，这说明合并拷贝是深拷贝，并不是引用拷贝，是一款不错的
+API。另外 ES6 提供了新的 API，也可以实现 JSON 数据的合并：
+
+.. code:: java
+
+   json1.push(...json2);
+
+这里涉及到 ``...`` 的语法以及 ES5 和 ES6 的故事：
+
+.. _展开语法-:
+
+展开语法 ``...``
+^^^^^^^^^^^^^^^^
+
+展开语法 *Spread syntax*
+是一种可以在函数调用/数组构造时，将数组表达式或者 String
+在语法层面展开的语法结构；还可以在构造字面量对象时，将对象表达式按
+key-value 的方式展开。这里的字面量一般指 ``[1, 2, 3]`` 或者
+``{name: "mdn"}``
+这种简洁的构造方式。一个较为简单的示例是将数组元素迭代为函数参数：
+
+.. code:: javascript
+
+   function fun(x, y, z){}
+   let args = [0, 1, 2];
+   fun.apply(null, args);
+
+**``Function.prototype.apply()``** 方法调用一个具有给定 ``this``
+值的函数，以及以一个数组或\ `类数组对象 <https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Guide/Indexed_collections#working_with_array-like_objects>`__\ 的形式提供的参数。\ **注意：**\ ``call()``
+方法的作用和 ``apply()`` 方法类似，区别就是 ``call()``
+方法接受的是\ **参数列表**\ ，而\ ``apply()``\ 方法接受的是\ **一个参数数组**\ 。
+
+将上面的调用方式用展开语法 ``...`` 来替换，可以是如下的形式：
+
+.. code:: javascript
+
+   function fun(x, y, z){}
+   let args = [0, 1, 2];
+   fun(...args);
+
+实际上, 展开语法和
+```Object.assign()`` <https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Reference/Global_Objects/Object/assign>`__
+行为一致,
+执行的都是只遍历一层的浅拷贝。另外在数组或函数参数中使用展开语法时，该语法只能用于\ `可迭代对象 <https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Reference/Global_Objects/Symbol/iterator>`__\ ，像
+``var obj = {'key':'value'}`` 这种形式的对象使用展开语法进行展开
+``var array = [...obj]`` 时将会报错。
+
+ES5 与 ES6
+^^^^^^^^^^
+
+JavaScript 的标准是
+`ECMAScript <https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Language_Resources>`__
+。截至 2012 年，所有的现代浏览器都完整的支持 ECMAScript
+5.1，旧版本的浏览器至少支持 ECMAScript 3
+标准。2015年6月17日，ECMA国际组织发布了 ECMAScript
+的第六版，该版本正式名称为 ECMAScript 2015，但通常被称为 ECMAScript 6
+或者 ES6。自此，ECMAScript 每年发布一次新标准。
+
+ECMAScript 是一种由 ECMA 国际（\ *European Computer Manufacturers
+Association*\ ，前身为欧洲计算机制造商协会）通过 ECMA-262
+标准化的脚本程序设计语言。这种语言在万维网上应用广泛，它往往被称为
+JavaScript 或 JScript，但事实上后两者是ECMA-262标准的实现和扩展。
+
+.. _22-json-对象与数组:
+
+2.2 JSON 对象与数组
+~~~~~~~~~~~~~~~~~~~
+
+JSON 对象的声明一般使用 ``let json = {};`` 而数组对象的声明则一般使用
+``let array = [];`` 。如果错把 array 当做 json 来使用则会在用 for
+循环遍历 key, value 时会在最终结果中额外附加一些函数声明。
+
+.. _23-回调函数作用域:
+
+2.3 回调函数作用域
+~~~~~~~~~~~~~~~~~~
+
+类内的回调函数的作用域似乎不是类本身，其中的 this
+指向的好像是全局变量。回调函数、闭包。
+
+.. _参考文献-2:
+
+参考文献
+~~~~~~~~
+
+1. 博客园.\ `合并JSON对象的正确方式 <https://www.cnblogs.com/Jaffray/p/11627062.html>`__\ [EB/OL].
+
+2. 简书.\ `合并两个json数据 <https://www.jianshu.com/p/cfb3760d91dd>`__\ [EB/OL].
+
+3. MDN Web Docs.
+   `Function.prototype.apply() <https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Reference/Global_Objects/Function/apply>`__\ [EB/OL].
+
+4. MDN Web
+   Docs.\ `展开语法 <https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Reference/Operators/Spread_syntax>`__\ [EB/OL].
+
+5. CSDN博客.\ `JS中回调函数、作用域及闭包详解 <https://blog.csdn.net/weixin_47087729/article/details/106526993>`__\ [EB/OL].
+
+6. CSDN博客.\ `Cesium闪烁 <https://kaisarh.blog.csdn.net/article/details/108680470>`__\ [EB/OL].
+
+7. CSDN博客.\ `CesiumGIF布告板 <https://blog.csdn.net/syj573077027/article/details/117900089>`__\ [EB/OL].
+
+8. CSDN博客.\ `CesiumGIF布告板 <https://blog.csdn.net/xietao20/article/details/109404491>`__\ [EB/OL].
+
+.. _3其他事项:
+
+3、其他事项
+-----------
+
+.. _31-更新-readthedocs-云端博客:
+
+3.1 更新 ReadTheDocs 云端博客
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+长久没登录 GitHub，再次在本地提交代码时居然提示：
+
+   remote: Support for password authentication was removed on August 13,
+   2021.
+
+纳尼！查了下百度，原来是 Github 程序员在七夕搞了一波事情。自 2021-8-13
+日起 Github 不再提供远程终端账户密码登录，而是需要使用网站生成 Token
+进行使用。具体位置是：
+
+   个人设置界面\ :math:`\rightarrow`\ Settings\ :math:`\rightarrow`\ Developer
+   setting\ :math:`\rightarrow`\ Personal access
+   tokens\ :math:`\rightarrow`\ Generate new token.
+
+使用时将 token 放到原来密码的位置即可。
+
+.. _32-基于-python-的-3dtiles-几何误差修改工具:
+
+3.2 基于 Python 的 3dtiles 几何误差修改工具
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Python 读取 JSON 文件
+^^^^^^^^^^^^^^^^^^^^^
+
+.. code:: python
+
+   import os
+   import json
+   file = open(path, "r+") #以读写方式打开文件：r只读,r+读写,w只写,w+读写
+   json = json.load(file)  #读取文件内容并转换为JSON对象
+
+其中 ``r+`` 形式如果文件不存在时会报错；\ ``w+`` 在文件不存在时会创建。
+
+Python 写入 JSON 文件
+^^^^^^^^^^^^^^^^^^^^^
+
+.. code:: python
+
+   data = ['a':1,'b':2,'c':3]
+   file = open(path, "r+")
+   # 另一种写法 with open('data.json', 'r') as f:
+   json.dump(data, file, indent=4)
+
+其中 ``indent=4`` 意在将 JSON
+文件格式化保存输出；另外如果要清空文件内容并覆盖的话，最好还是使用文件指针定位函数
+``f.seek(0)`` 定位到文件头，然后用 ``f.truncate()``
+截断当前位置后所有字符，然后再保存。
+
+Python 列出文件夹下所有文件
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. code:: python
+
+   dirs = os.listdir(folder)             #列出所有文件，包括文件夹
+   is_dir = os.path.isdir(dirs[0])       #判断是否是文件夹
+   file_info = os.path.splitext(dirs[0]) #获取文件名及后缀 
+                                         #file_info[0] 为文件名 
+                                         #file_info[1] 为后缀，形如 .json
+   dirs.sort(key=lambda x: int(x[:-5])   #截取.json后缀文件的文件名数字进行排序
+
+.. _参考文献-3:
+
+参考文献
+~~~~~~~~
+
+1. CSDN.
+   `github开发人员在七夕搞事情 <https://blog.csdn.net/weixin_41010198/article/details/119698015>`__\ [EB/OL].
+
+2. 博客园. `python
+   txt文件读写（追加、覆盖） <https://www.cnblogs.com/syw20170419/p/10972471.html>`__\ [EB/OL].
+
+3. 百度经验.\ `python写入已有文件前怎么清空内容 <https://jingyan.baidu.com/article/359911f529293c16ff03061e.html>`__\ [EB/OL].
