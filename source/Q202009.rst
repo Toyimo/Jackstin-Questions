@@ -360,7 +360,15 @@ Tube3dMaxplugin
 
 在做弯头和阀门模型的时候，必须保证两条直线使用的是同一个点号；在点位去重时，必须优先保留具有地理实体的点号记录，以此确保生成模型的旋转角角度正确。另外，执行点号匹配操作时，如果在已有的管点数据库中没有找到对应的点号，需要在代码中自动创建并添加需要的点号。
 
+.. figure:: pic/image-20200909100758487.png
+   :align: center
+   :scale: 50
+
 Python中使用三重引号，就不用考虑里面的转译符，直接可以按照自己的设计得出自己想要的结果。上面图片描述的问题在于，管线没有在应该断开的地方（如热力阀门）断开，从而导致该处的模型绘制不正确；龙哥指点确认这种问题为原始数据的错误，我们无需处理。
+
+.. figure:: pic/Snipaste_2020-09-14_11-39-16.bmp
+   :align: center
+   :scale: 48
 
 原始数据中还有如图所示的折线中的折点数据未能在管点数据中进行体现的问题，由于ArcPy中没有提供折线折点查找的方法，所以这种问题处理起来比较麻烦，由于发现的类似问题不多，暂时考虑人工进行处理。
 
@@ -417,6 +425,10 @@ Python中使用三重引号，就不用考虑里面的转译符，直接可以�
 
 地下管线建模经历漫长的前期数据处理终于走到手动建模阶段了，目前的手动建模处理过程是基于SHP分块后的结果进行的，因而需要在处理中手动记录处理进程，以下为管线分块结果：
 
+.. figure:: pic/shp_grid.png
+   :align: center
+   :scale: 48
+
 接下来对手动处理过程进行一个记录，注意此时尚未对建模后的结果进行合并处理。
 
    -  GDB\ *00*\ 00.mdb: 473350,4290977
@@ -466,6 +478,10 @@ Python中使用三重引号，就不用考虑里面的转译符，直接可以�
 
 Cesium与开源社区合作开发的\ **3DTiles**\ 文件格式是一个开放的用于\ **传输海量、异构三维地理空间数据集**\ 的规范。它是在正致力于成为统一三维格式标准的\ **glTF**\ 的基础上加入了分层LOD的结构后得到的产品，文件组织与二维地图中的瓦片十分相似。目前看来，由于Cesium集成了WebGL、三维球开源框架以及大数据渲染，能够满足Web端对三维地球的基本需要，二者间密不可分的联系促使3DTiles正在成为WebGL三维地球的文件标准。
 
+   .. figure:: pic/glTF_100px_June16_150_75.png
+      :align: left
+      :scale: 48
+
    三维图形语言传输格式\ **glTF**\ 的全称为GL Transmission
    Format，由OpenGL和Vulkan背后的3D图形标准组织Khronos所定义，其目标是以适合在运行时应用程序中使用的形式定义用于表示3D内容的标准，这种跨平台格式已成为Web上的3D对象标准。然而glTF并不是”另一种文件格式“，它是3D场景\ **传输格式**\ 的定义：
 
@@ -480,6 +496,10 @@ Architecture of 3DTiles
 
 JSON的全称为JavaScript Object
 Notation，也即JS对象简谱，是一种轻量级的、易于人阅读和编写、同时也易于机器解析和生成的数据交换格式。在3DTiles文件标准下，Cesium将以一个JSON格式的主TileSet瓦片集文件作为程序入口点去组织某一区域的其他Tiles瓦片文件。这里以一份官网提供的主TileSet样本JSON文件为例，其JSON文件及其相应的结构树如下图所示：
+
+.. figure:: pic/3d_tiles.png
+   :align: center
+   :scale: 48
 
 如上图所示，TileSet文件的根节点下挂了四个顶层属性节点：\ **asset**\ 节点、\ **properties**\ 节点、\ **geometricError**\ 节点以及\ **root**\ 节点，通常可以理解为TileSet的资源节点、配置节点、几何误差节点瓦片集根节点。上图所示的根节点下的root属性节点就是一个3DTiles文件标准下的Tiles瓦片。
 
@@ -499,6 +519,10 @@ Notation，也即JS对象简谱，是一种轻量级的、易于人阅读和编�
         Scene Graph中通过Group节点建立的场景根节点的操作类似。
 
 一个TileSet的根节点下面可能挂载着若干个Tile文件，这些具有更加具体的配置的Tile文件就是上面所说的瓦片。了解文件入口处TileSet的相关内容之后，接下来可以通过一张图来了解3DTiles中Tile文件的数据结构。
+
+.. figure:: pic/tile.png
+   :align: center
+   :scale: 48
 
 一个瓦片下共有五个通用的属性节点：\ **boundingVolume**\ 节点、\ **geometricError**\ 节点、\ **refine**\ 节点、\ **content**\ 节点以及\ **children**\ 节点，可理解为包围体节点、几何误差节点、细化方式节点、内容节点以及瓦片子节点；如果需要对模型进行变换的话还有一个\ **transform**\ 节点，也即空间变换节点可用。
 
@@ -541,6 +565,10 @@ Error作为一个量化瓦片及瓦片集的\ **表现几何和理想几何之�
 实际上，最终在渲染层面上决定到底该渲染哪一级瓦片的是最大屏幕空间误差，也即Maximum
 Screen Space
 Error（SSE）。Cesium中的SSE由几何误差、相机状态有关的各项参数计算而来，
+
+.. figure:: pic/geometric_error.png
+   :align: center
+   :scale: 48
 
 为了更好的研究3DTiles文件，似乎还是得先从Cesium开始着手研究。Cesium是一个用于显示三维地球和地图的开源Java
 Script库，它可以用来显示海量三维模型数据、影像数据、地形高程数据、矢量数据等等。三维模型格式支持glTF、三维瓦片模型格式支持3DTiles；矢量数据支持geojson、topojson格式；影像数据支持wmts等；高程支持STK格式。
@@ -599,6 +627,10 @@ Q3 基于数字表面模型重构的实景模型顶点简化
 ~~~~~~~~~~~~~~
 
 建立四叉树索引并计算包围盒的目的是从生成的DSM模型中根据坐标找到与之相应的地理范围及边界，但是根据OSG的BoundingBox所计算出来的包围盒并不是最佳外围轮廓，如下图所示；我们可以理解它这么做的道理，可这种边界显然不能满足下一步界定地理范围并执行DSM模型生成的需要。
+
+.. figure:: pic/boudingbox_tile.png
+   :align: center
+   :scale: 48
 
 为了解决这一问题，有两个步骤：
 
@@ -698,10 +730,18 @@ Bentley-Ottmann Algorithm
 [ **算例** ]
 如下图所示的三个矩形\ :math:`\Box ABCD`\ ，\ :math:`\Box EFGH`\ 以及\ :math:`\Box IJKL`\ ，取左下角点和右上角点作为矩形的描述参量，并取左下角点符号作为矩形标识符则有\ :math:`{\color{ForestGreen}\Box A}=\{P_A(0,0),P_C(8,10)\}`\ ，\ :math:`{\color{Brown}\Box E}=\{P_E(-4,-4),P_G(3,8)\}`\ ，\ :math:`{\color{Magenta}\Box I}=\{P_I(-6,-2),P_K(10,2)\}`\ ；将\ :math:`{\color{ForestGreen}\Box A}`\ 与\ :math:`{\color{Brown}\Box E}`\ 的交点设为\ :math:`M,N`\ ，将\ :math:`{\color{ForestGreen}\Box A}`\ 与\ :math:`{\color{Magenta}\Box I}`\ 的交点设为\ :math:`O,P`\ 。
 
+.. figure:: pic/rectangle.png
+   :align: center
+   :scale: 48
+
 发现自己写好难哦呜呜呜，发现了两个计算几何的库CGAL（Computational
 Geometry Algorithms Library, 计算几何算法库）和GEOS（Geometry Engine –
 Open Source,
 几何引擎—开源），目前来看，CGAL库的受众更广一些，所以相关的参考资料也多一点，而GEOS入门较费劲，但GDAL库中对其进行了引用。GDAL库中有一个几何类库名OGRGeometry中有求交、求并的函数，利用该库可以得到如下合并结果。
+
+.. figure:: pic/polygon.png
+   :align: center
+   :scale: 48
 
 用到的一些GDAL的类和方法主要有注册函数\ ``GDALAllRegister();``\ ，\ ``OGRRegisterAll();``\ ，OpengGIS拓展类\ ``OGRGeometry``\ 、\ ``OGRPolygon``\ 、\ ``OGRLinearRing``\ 以及\ ``OGRPoint``\ 。这些拓展类及其包括相交、联合和剪除在内的布尔运算操作均需要依赖GEOS库。
 
@@ -771,9 +811,6 @@ Open Source,
 目前推测，这种坐标偏移问题实际上与double或者float小数点尾数精度有关，当存储较大的坐标值时，浮点数的小数点后的尾数精度会受到限制，从而在3D
 Max中产生模型绘不准问题，而在OSG中则体现为切换视角时模型产生的鬼畜抖动问题，如下图所示。
 
-.. figure:: C:\Users\Administrator\Desktop\Jaxin's question list\pic\big_shaking 00_00_00-00_00_30.gif
-   :alt: 
-
 对于OSG中的osg::HeightField而言，可以较为方便地控制其顶点坐标绘制的函数为\ ``setOrigin()``\ 设置起始点地理坐标函数。通过设置\ ``Point<double> noshaking = rect.P1()-_geograph_offset;``\ 可以达到与上面代码相同的效果，这里的\ ``_geograph_offset``\ 为实景三维模型瓦片的地理偏移。
 
 .. _header-n297:
@@ -782,6 +819,10 @@ Max中产生模型绘不准问题，而在OSG中则体现为切换视角时模�
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
 如下图所示，建立四叉树索引时需要考虑其在地理空间中的瓦片层级以及该层级在平面空间中所包含的瓦片网格数目的多少；以下图为例，左图为L3层级金字塔所对应的网格划分，该层级共包含\ :math:`8^2=64`\ 个瓦片网格，每个瓦片网格中最多含有\ :math:`8^2=64`\ 个0级初始瓦片。
+
+.. figure:: pic/quad_tree.png
+   :align: center
+   :scale: 48
 
 根据L3层生成的位于L3文件夹下以对应区域的Morton码命名的文件，可以向上查找其上层文件所对应的Morton码并通过该码来搜寻L4层该码对应区域的L3的文件，并以此来构建我们所需要的四叉树。其步骤如下：
 
