@@ -16,6 +16,10 @@ Q1、《建塔流程》12月修订版
 
 具体的操作流程说明如下：
 
+.. figure:: pic/202012/PLOD.png
+   :align: center
+   :scale: 66
+
 .. raw:: html
 
    <html xmlns="http://www.w3.org/1999/xhtml"><head></head><body><p style="text-indent:-3em;padding-left:4em">
@@ -327,6 +331,10 @@ OSG 共享子节点
 Acyclic Graph,
 DAG）；在此有向无环图的定义是：对于其中的任意节点N，都不可能存在一条通路，以N作为通路的开始和结束。这一方式为OSG提供了一种多个父节点共享一个子节点的子节点实例化模式，也就是说多个父节点指向同一个子节点而不是每个父节点都指向一个新的子节点。
 
+.. figure:: pic/202012/shared_node.png
+   :align: center
+   :scale: 60
+
 这个还涉及到 C++
 关于深拷贝和浅拷贝的相关知识，有一点发现不知道是否准确：拷贝不同于指针赋值，拷贝出来的变量的指针指向的地址是不同的，即便其最终指向同一块内存。这个论述其实并不准确，拷贝是一个相对于对象的概念，一般发生在对象赋值过程中调用的拷贝构造函数中，而我们一般所指的指针赋值是相对于
 C++
@@ -361,10 +369,17 @@ C++
 OverlayNode 的纹理渲染单元，该函数的功能描述为：\ *Set the texture unit
 that the texture should be assigned to.*
 
+.. figure:: pic/202012/multioverlay.png
+   :align: center
+   :scale: 60
+
 上图所示为添加多个 OverlayNode
 时修正前和修正后的结果对比。由此基本解决了在使用 OverlayNode
 过程中所遇到的共享 shp
 子节点的问题。为了进一步确定实现多对多矢量导入的功能，设计如下链接方式：
+
+.. figure:: pic/202012/multi_shp_model.png
+   :align: center
 
 三维场景中初始化加载了三个模型图层分别为 M1、 M2、
 M3，图（a）所对应的配置需求是读进三个 \*.shp 文件并对应创建 Shape 节点
@@ -520,11 +535,15 @@ Range 参数，对于配置因子 :math:`f_x` 有：
 金字塔模型偏移
 ~~~~~~~~~~~~~~
 
-对于中铁集团的66、67、68、69号模型进行协同建模时发现，对于这一套模型所执行的
+对于某集团的66、67、68、69号模型进行协同建模时发现，对于这一套模型所执行的
 Q1
 所述的建塔流程在模型表现上还有很多不尽如人意的地方，主要包括：\ **A.**
 向上几级的金字塔模型纹理有些模糊， **B.** 金字塔模型与实景模型瓦片之间在
 :math:`y` 轴上有一个不小的偏移，如下图：
+
+.. figure:: pic/202012/ztjt_terrain_offset.png
+   :align: center
+   :scale: 38
 
 那么，该如何分析这一问题呢。首先，排查根据包围盒进行裁剪后所生成的 DSM
 和 DOM
@@ -534,7 +553,7 @@ metadata.xml 文件与 main.osgb
 所存储的偏移量在第 6 位数字做了一个四舍五入的处理。
 
 由于存储精度的问题导致 main.osgb 中所存储的地理信息照比 metadata.xml
-中所存储的偏移量少了一个精度， 其应用的偏移量为：
+中所存储的偏移量少了一个精度， 其应用的偏移量为 ：
 
 .. math::
 
@@ -546,6 +565,10 @@ metadata.xml 文件与 main.osgb
    \end{bmatrix}
 
 而 metadata.xml 中所存储的偏移量为：
+
+.. figure:: pic/weibo/tieba_emotion_27.png
+   :align: center
+   :scale: 24
 
 .. math::
 
@@ -567,9 +590,13 @@ metadata.xml 文件的功能，只对数据进行一个有效位保留的控制�
 GeoTiff
 的控制标签，事实证明是的，像素偏移\ :math:`(-1.2,-1.5)`\ 时，偏移恢复正确。
 
+.. figure:: pic/202012/pyramid_offset.png
+   :align: center
+   :scale: 55
+
 这里还有一个很有意思的地方，就是针对 Production\ *SCGK*\ 41_osgb
-**双城管控**\ 文件的处理并没有发现什么特别明显的偏移问题，而对 ZTJT
-**中铁集团**\ 模型所进行的处理产生的偏移效果就特别明显；这里能够看出
+**某某管控**\ 文件的处理并没有发现什么特别明显的偏移问题，而对 ZTJT
+**某某集团**\ 模型所进行的处理产生的偏移效果就特别明显；这里能够看出
 SCGK 的尺度实际上要比 ZTJT的大很多，也就是说 SCGK
 的模型分辨率实际上应该是低于 ZTJT 的。
 
@@ -579,9 +606,6 @@ SCGK 的尺度实际上要比 ZTJT的大很多，也就是说 SCGK
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 在计算机图形学中，纹理过滤或者说纹理平滑是在纹理采样中使采样结果更加合理，以减少各种人为产生的穿帮现象的技术。纹理过滤分为放大过滤和缩小过滤两种类型。对应于这两种类型，纹理过滤可以是通过对稀疏纹理插值进行填充的重构过滤(需要放大)或者是需要的纹理尺寸低于纹理本身的尺寸时(需要缩小)的一种抗锯齿过滤。简单来讲，纹理过滤就是用来描述在不同形状、大小、角度和缩放比的情况下如何应用纹理。根据使用的过滤算法的不同，会得到不同等级的模糊、细节程度、空域锯齿、时域锯齿和块状结果。
-
-.. figure:: C:\Users\Administrator\Desktop\Jaxin's question list\pic\202012\model_wave.gif
-   :alt: 
 
 .. code:: c++
 
@@ -671,8 +695,8 @@ glTF 格式如 Maya、3ds Max、Unity 等。使用 glTF 模型的优势如下：
 tiny glTF 2.0 library 用于操作三维模型数据，当然也可以用这个库来实现
 \*.osgb 文件到 glTF 文件的转换。
 
-.. figure:: C:\Users\Administrator\Desktop\Jaxin's question list\pic\202012\tinygltf.svg
-   :alt: 
+.. figure:: pic/202012/tinygltf.png
+   :align: center
 
 glTF 资源可以带一个或者多个 .bin
 文件，用来存储几何数据，动画数据，Skin等，在 “\*.gltf” 的 JSON
@@ -974,8 +998,9 @@ Lambda 表达式写成如下形式：
 
 微软官方文档中绘制了如下示意图，
 
-.. figure:: C:\Users\Administrator\Desktop\Jaxin's question list\pic\202012\lambdaexpsyntax.png
-   :alt: 
+.. figure:: pic/202012/lambdaexpsyntax.png
+   :align: center
+   :alt: Lambda 表达式
 
 其中，
 
@@ -1218,6 +1243,10 @@ M.S.1.0 极简 DSM 加适当格网简化
   :math:`S_{DSM}\div 10` ，并上调顶点简化因子，令
   :math:`f_q\times 10`\ ；据此参数重新生成顶层文件；
 | **实验结果**\ ：出现空洞现象。
+
+.. figure:: pic/202012/hole.png
+   :align: center
+   :scale: 70
 
 .. _header-n290:
 

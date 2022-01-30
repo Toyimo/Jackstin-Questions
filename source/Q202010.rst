@@ -21,7 +21,7 @@ Q1、重建顶层的存储显示优化
 
 利用GDAL的图像大小调整函数，即可对纹理图片进行相应层级的压缩，以此来实现类似于构建图像金字塔的操作，这样一来即可减少纹理在最终生成的*.osgb文件中的内存占比了。
 
-.. figure:: pic/202010/[GDAL]Raster_IO.bmp
+.. figure:: pic/202010/Raster_IO.bmp
    :align: center
    :scale: 48
 
@@ -126,7 +126,7 @@ GDAL中\ ``GDALRasterBand``\ 类下的\ ``RasterIO()``\ 函数可实现的功能
 
 .. figure:: pic/202010/PLOD_range_list.png
    :align: center
-   :scale: 48
+   :scale: 36
 
 回来啦。从下面的俯视图角度来看，似乎问题可以通过修改RangeList的半径来进行解决，但是事实上修正了这个半径之后还是会存在瓦片缺失的问题，是一个治标不治本的解决策略。
 
@@ -348,7 +348,7 @@ PagedLOD的相对路径
 
 .. figure:: pic/202010/gap.bmp
    :align: center
-   :scale: 48
+   :scale: 20
 
 目前一个可行的方案是适当扩大包围盒的范围，这样一来可以粗暴的解决这一问题，但存在隐患的噻。后续改进等白边问题处理解决之后，再看看能不能回来考虑这个问题。
 
@@ -357,13 +357,13 @@ PagedLOD的相对路径
 
 .. figure:: pic/202010/geogebra-export.png
    :align: center
-   :scale: 48
+   :scale: 20
 
 显而易见，每个包围盒之间是存在交叠区域的，问题并非出现在包围盒计算这一步。调查离散采样这一步的生成结果试试，进行地理偏移并转换为DSM影像中的栅格坐标的结果如下图所示，显然还是有重叠区域的。
 
 .. figure:: pic/202010/Image_Raster.png
    :align: center
-   :scale: 48
+   :scale: 20
 
 进行下一步查找，问题铁定是出现在\ ``createHeightFeild()``\ 以及\ ``createStripGeometry()``\ 函数中了。传进来的矩形是没有问题的，那么肯定是在处理时忽略了某些不该忽略的像素。还真的就是这块儿的问题，由于在执行压缩时引入了compressed参数来对原有高程进行压缩，默认来说compressed参数将基于0.08逐层向下衰减，当其降低到一定程度时，若用\ ``width_comp = width * _compressed;``\ 的形式则会产生一些损失，从而导致图像在右下方边界取值时的缺失，解决这一问题也很简单，将向下取整函数改为向上取整\ ``std::ceil()``\ 即可。
 
@@ -604,7 +604,7 @@ Q3、建立实景模型金字塔索引的操作流程
 
 .. figure:: pic/202010/ncjzxl.png
    :align: center
-   :scale: 48
+   :scale: 20
 
 途中橙色为无顶层PagedLOD加载全部瓦片所占时间及内存，蓝色为利用本文方法建立实景金字塔索引后加载全部瓦片所占用的时间及内存，原始加载方式加载全部瓦片需耗时124s并占用约1994MB的内存空间，而建立金字塔索引后加载全部瓦片耗时5s占用约270MB内存空间，节省了约\ **84.6%**\ 的内存占用，约\ **96%**\ 的模型加载时间。
 
@@ -694,7 +694,7 @@ GDAL的矢量拓展实现于对OGR库的扩展，具体操作为从OGRSFDriver�
 
 .. figure:: pic/202010/TanShiXiong.png
    :align: center
-   :scale: 8
+   :scale: 18
 
 关于地形挖洞，帅帅的谭师兄告诉了我这样一种解决方案，即通过对osgEarth库中的\ ``ElevationLayer``\ 类施加操作类\ ``ElevationLayerOptions``\ 来执行地形的挖洞：
 
@@ -713,7 +713,7 @@ GDAL的矢量拓展实现于对OGR库的扩展，具体操作为从OGRSFDriver�
 
 .. figure:: pic/202010/DaLu.png
    :align: center
-   :scale: 8
+   :scale: 18
 
 另外，在大陆同志的帮助下，找到了myterreconstruct.cpp文件中谭师兄设计的用顶点着色器和片元着色器来进行部分区域顶点颜色的相关透明化设置的方法，相关的功能代码被写在\ ``IntersectOrNot()``\ 函数中。
 

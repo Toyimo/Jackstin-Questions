@@ -35,6 +35,10 @@ Garland*\ 于1999年所提出的一种基于边折叠简化算法的格网简化
 | **QVis**\ ： 有图形界面的QSlim，如下图所示；
 | **SMFView**: \*.smf模型查看工具。
 
+.. figure:: pic/202011/QSlim_cow.bmp
+   :align: center
+   :scale: 20 
+
 libgfx库和Qvis库都依赖于开源图形用户界面库FLTK，也即Fast Light Tool
 Kit，发音为/fulltick/。该库的编译并不复杂，唯一需要注意的是FLTK库的版本号为1.3.0，需要的各库的版本如下：
 
@@ -71,6 +75,10 @@ of War*\ 为例，用KWIC算法所建立的关键字索引应如下所示：
 |  **SHADOWS** of War
 |  Shadows of **WAR**
 | Gone With the **WIND**
+
+.. figure:: pic/202011/hash.png
+   :align: center
+   :scale: 20
 
 KWIC算法以所有可能的顺序重新排列标题中的关键词，然后按关键词首字母进行排序，最后输出包含关键字的完整上下文列表（包含除介词，连词和冠词以外的所有内容）。KWIC算法在文本索引方面的突出优势使其在科学界大放异彩，这种方法的原理与数字分桶相似，只不过它是以生成的文本关键字concordances来作为分桶的标识符的。KWIC算法已成为数字计算机时代的重要算法之一的Hash算法的先驱，目前看来，Hash函数之所以被命名为哈希与其理念提出者并无直接关联，这一方法的命名应当是以其单词语义为依托的，恰如其在中文译文中也常被翻译为\ **散列**\ 。1958年的正当时，\ *Luhn*\ 很快意识到该算法的巨大应用前景，并在《A
 Business Intelligence
@@ -121,15 +129,31 @@ Height俗称裙边，在汉语词典中有两种释义:
 
 顶点索引重构算法的设计目的是为了在条带式osg::Geometry绘图节点的基础上，对图元几何的顶点坐标和面片索引进行重构以删除条带式几何中的重复顶点，从而实现一个标准的三维Mesh格网结构。
 
+.. figure:: pic/202011/RebuildVertex.png
+   :align: center
+   :scale: 40
+
 上图描述了条带式几何顶点转向标准 Mesh
 顶点时的顶点索引重构过程。这一重构算法的核心在于确定重复顶点并在重复顶点处引用已创建了的顶点坐标的坐标索引。考虑到用\ ``float``\ 类型来相等来推断
 osg::Vec3 类是否相等在精度方面可能存在的隐患，本文使用 MD5 算法对
 osg::Vec3 顶点坐标字符求取散列值，并将该值作为 C++ 中\ ``map``\ 容器的
 Key 值，由此来寻找重复的顶点。
 
+.. figure:: pic/202011/tri_surf_large.png
+   :align: center
+   :scale: 48
+
 由此设计的顶点坐标重构类VertexRestructor的主要成员变量及成员函数如下：
 
+.. figure:: pic/202011/VertexMap.png
+   :align: center
+   :scale: 65
+
 主要的实现函数为\ ``add()``\ 函数，\ ``vertex_id``\ 为自增索引变量，每次调用\ ``add()``\ 函数，则\ ``vertex_id``\ 会自增。所有的顶点坐标都存在链表\ ``vertex_list``\ 中，每次\ ``add()``\ 操作都会在\ ``check_map``\ 中检查是否含有重复的顶点坐标；如果该点已添加，则返回其原有索引；如果没有添加，则返回其新增索引。
+
+.. figure:: pic/202011/qslim.png
+   :align: center
+   :scale: 40
 
 .. _header-n40:
 
@@ -214,9 +238,13 @@ ShapeNode节点中；当需要对节点贴地情况进行变更时，只需要�
 ShapeNode 节点中删除创建的节点并将该节点直接挂接到 OverlayNode
 的子节点下即可。
 
+.. figure:: pic/202011/OverlayNode.png
+   :align: center
+   :scale: 54
+
 而目前存在的一个更为复杂的问题是，如何对工程应用中的模型节点加以控制。即，根据工程需要在软件中实现对某些节点的链接和操作以实现矢量文件在这些模型上的贴合。
 
-.. figure:: C:\Users\Administrator\Desktop\Jaxin's question list\pic\202011\dotNetOsg-openProject.svg
+.. figure:: pic/202011/dotNetOsg-openProject.png
    :alt: 
 
 在 DotNetOsgApplication
@@ -313,6 +341,10 @@ C++的函数指针就是指向函数的指针，与变量指针所不同的是�
 
 这里还需要额外介绍C++的成员函数指针。当将函数指针用作C++类的成员变量时，其主要体现了C++语系的两个知识点：指针的声明以及赋值。其范例程序如下：
 
+.. figure:: pic/202011/Calculator.png
+   :align: center
+   :scale: 50
+
 .. _header-n122:
 
 实现字符串的split()函数
@@ -364,6 +396,10 @@ Quiet NaN
 两种，前者在使用时会在程序中发出\ **无效操作**\ 的信号，而后者则能够执行几乎所有的算术运算而不作出无效操作警示。IEEE754
 标准用指数部分全为1、小数部分非零表示NaN，即：
 
+.. figure:: pic/202011/NaN.png
+   :align: center
+   :scale: 60
+
 返回NaN的运算有如下三种：
 
 1. 至少有一个参数是NaN的运算；
@@ -397,6 +433,10 @@ osgDB下ObjectWrapper的BaseCompressor类使用了代理模式这样一种设计
 代练的流程是，玩家 Client 把自己的账号交给代练人员
 Proxy，让他们帮玩家操作人物施放技能赢得游戏，在这个过程中玩家只需要提供账号即可。代练人员要做的就是登陆玩家的账号然后替玩家打游戏；在玩家的朋友看来，是玩家的角色正在游戏，而无从知晓是不是你本人在打游戏，他只能看到你操作的英雄正在战斗，但并不需要知道实际打游戏的是谁。这就是代理模式，由他人代理玩游戏。
 
+.. figure:: pic/202011/IGamePlayer.png
+   :align: center
+   :scale: 55
+
 根据上面的思想，可以写出如下的代练代码：
 
 .. code:: java
@@ -419,8 +459,8 @@ Proxy，让他们帮玩家操作人物施放技能赢得游戏，在这个过程
 
 这里描述一下\ ``osgDB::writeNodeFile()``\ 函数的执行过程，在此过程中探索Options类是如何生效的，及其是如何实现在写入文件时执行zlib文件压缩的，其使用的类的UML结构图如下图所示：
 
-.. figure:: C:\Users\Administrator\Desktop\Jaxin's question list\pic\202011\writeNodeFile.svg
-   :alt: 
+.. figure:: pic/202011/writeNodeFile.png
+   :align: center
 
 .. _header-n152:
 
@@ -458,6 +498,10 @@ Q4、图像缩放与插值算法
 
 GDAL不仅支持最近邻插值、双线性插值、双三次插值等常见插值算法，其也提供了对Lanczos插值、Average插值、Mode插值以及高斯插值等其他插值方法。但GDAL从2.0版本才开始支持RasterIO接口进行插值算法配置，此前用RasterIO函数进行图像缩放时默认使用最近邻插值。
 
+.. figure:: pic/202011/Comparison_of_1D_and_2D_interpolation.png
+   :align: center
+   :scale: 68
+
 .. code:: c
 
    GDALRasterIOExtraArg exterArg;
@@ -468,6 +512,10 @@ GDAL不仅支持最近邻插值、双线性插值、双三次插值等常见插�
 上回书说道，哦不是，我记错了，上回书说的是shape标准文件。\ **\*.tfw**\ 文件全称为
 World File For TIFF，是GIS应用中存储 TIFF
 图像数据的地理标签的一种明码文件，标准\*.tfw文件共有6行，其含义如下：
+
+.. figure:: pic/202011/geotrans.png
+   :align: center
+   :scale: 48
 
 其对应着GDAL的地理放射变换：
 
@@ -522,6 +570,10 @@ GL\ *TEXTURE*\ WRAP\ *R //分别为xyz方向
 GL*\ REPEAT, GL\ *MIRRORED*\ REPEAT, GL\ *CLAMP, GL*\ CLAMP\ *TO*\ EDGE,
 GL\ *CLAMP*\ TO_BORDER
 
+.. figure:: pic/202011/texture.png
+   :align: center
+   :scale: 62
+
 .. _header-n198:
 
 材质 \| Material
@@ -539,6 +591,10 @@ Material Color 也即材质颜色来进行表达，其一般包括以下几点�
 
 其中的ABC三点要素构成了冯氏（\ *Phong
 Bui-Tuong*\ ）光照模型的基本参数，即：
+
+.. figure:: pic/202011/Phong_components_version_4.png
+   :align: center
+   :scale: 60
 
 人眼观察到的颜色，实际上是光照射物体后反射的光进入眼睛后感受到的颜色，其并不是物体实际的颜色。令\ :math:`C_r`
 为物体反射颜色，\ :math:`C_o` 为物体颜色，\ :math:`I`
@@ -575,6 +631,10 @@ Bui-Tuong*\ ）光照模型的基本参数，即：
 ^^^^^^^^^^^^^^^^
 
 光照一般分为点光源和平行光源，且光源在传播过程中会存在衰减现象。在本文生成DSM的过程中应保持生成的DSM要关闭光照，并使用快捷键[L]将模型亮度调整为最亮，以此确保生成的模型和原始模型之间不会存在太大的色差问题。关于这一部分内容暂且按下不表，因为目前的项目安排中还没有涉及到具体的关于光照的详细设计，在OSG会议上倒是有相关公司展开了这一方面的详细研究，名为基于物理的光照（PBR）的设计，这种方式的光照比之冯氏光照在渲染显示的效果方面还是有很大的提高的。其研究成果如下所示：
+
+.. figure:: pic/202011/Snipaste_2020-11-29_20-47-16.jpg
+   :align: center
+   :scale: 50
 
 .. _header-n216:
 
@@ -630,6 +690,10 @@ Bui-Tuong*\ ）光照模型的基本参数，即：
 时用Matlab对上述函数绘制，可得到如下图所示的函数图像。红色曲线为幂函数曲线，蓝色曲线为余弦函数与幂函数的叠加函数，绿色曲线为反比例函数。红色曲线取幂函数底数为
 :math:`1/4`
 的目的在于，令实景模型金字塔向上采样时尽可能使采样后的大范围区域内的顶点数，与其下一级四分区域中的每一区域内的顶点数趋于一致。
+
+.. figure:: pic/202011/downsize_function.png
+   :align: center
+   :scale: 70
 
 这里还需注意， 红色曲线所定义的曲线因子需要反馈于公式
 :math:`F_{\mathrm{v}}=S_{DSM}\cdot f_q`
