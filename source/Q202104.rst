@@ -13,6 +13,9 @@ youth in everything, That heavy Saturn laughed and leapt with him.
 
    <html xmlns="http://www.w3.org/1999/xhtml"><head></head><body><center><font size="4" face="华文楷体">小山重叠金明灭，鬓云欲度香腮雪。<br />懒起画峨眉，弄妆梳洗迟。<br />照花前后镜，花面交相映。<br />新帖绣罗襦，双双金鹧鸪。</font></center></body></html>
 
+|
+
+   
 Q1、PP工具可视化界面
 --------------------
 
@@ -97,6 +100,10 @@ Q2、全景项目
 如果要将白膜变成如下图所示的渐变色，则需要更改着色器的代码[3-4]；暂时看到的相关参考博客中关于着色器代码的修改可以在
 Cesium 源码中进行，后续看看是否能找到 Cesium 修改着色器的接口。
 
+.. figure:: pic/202104/blue_model.png
+   :align: center
+   :scale: 70
+
 这里还用到了在 Cesium
 中根据节点名寻找节点的一个简单方法如下。该方法目前存在一个
 BUG，就是在模型节点关掉重启之后，背景蓝色模型恢复为白膜了；可能后续在设计时需要修改
@@ -117,7 +124,7 @@ Shader 来完成相关操作了。
 
 这里将以此为例，引入一些比较好的 UI
 框架实现左侧导航抽屉效果，目前看到的能够拥有较好的抽屉支持效果的前端 UI
-框架有：、、、Vant（偏向移动端）、Flutter 以及 Material-UI
+框架有：Vuetify、Quassar、Layui、Vant（偏向移动端）、Flutter 以及 Material-UI
 框架。个人观感比较好的框架是 Vuetify、Quasar，以及
 Layui。没错，列出的顺序代表主观评价。
 
@@ -306,6 +313,10 @@ Language*, EL 表达式简化书写，Thymeleaf 采用的是与之类似的对�
 3.2 Concepts of SpringBoot
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+.. figure:: pic/weibo/tieba_emotion_80.png
+   :align: center
+   :scale: 28
+
 实在是搞不定了，用《Spring Boot
 实战》来入门，感觉还是挺费劲的。遇到问题的话很难继续搞下去，里面的内容实在是有点庞杂，还是需要一个系统的学习过程。
 
@@ -351,6 +362,9 @@ Java
 用来指定注解的策略，而最后一个主干 ``Annotation``
 实际上就是一个接口。三个主干类的关系图如下：
 
+.. figure:: pic/202104/JavaAnnotation.jpg
+   :align: center
+
 Java
 注解的通用定义中使用了四个注解：\ ``@Document``\ 、\ ``@Target``\ 、\ ``@Rentation``
 以及 ``@interface``\ ，这些注解都是对定义注解的修饰，其使用方法如下：
@@ -377,6 +391,9 @@ Java
 是 Xerox PARC 在二十世纪八十年代为编程语言 Smalltalk-80
 发明的一种软件设计模式，后来作为 Oracle 旗下 Sun 公司 Java EE
 平台的设计模式而为人们所熟知。
+
+.. figure:: pic/202104/SpringMVC.png
+   :align: center
 
 Spring MVC 框架主要由中央控制器 DispatcherServlet、处理器映射
 HandlerMapping、控制器 Controller、视图解析器 ViewResolver、视图 View
@@ -437,6 +454,10 @@ Mapper\ :math:`\rightarrow`\ DB 数据库，按常规设定可以指定为：Ent
 实体层，DAO 持久层，Service 业务层以及 Controller 控制层等四个层级，DAO
 的全称是 Data Access Object，即数据存储对象 。SpringBoot
 框架结构如下图所示：
+
+.. figure:: pic/202104/layer.png
+   :align: center
+   :scale: 18
 
 建立了 DAO 层后才可以建立 Service 层，而 Service 层又是在 Controller
 层之下的，因而 Service 层应该既调用 DAO 层的接口，又要提供接口给
@@ -553,6 +574,9 @@ TCP/IsP 通信协议来传递数据的应用最为广泛的一种网络传输协
 文件，即 World Wide Web
 万维网文件都必须遵守这个标准。关于超文本传输协议有几点内容需要了解：
 
+.. figure:: pic/202104/http.png
+   :align: center
+
    | **统一资源定位器** Uniform Resource Locator，URL
    | 使用数字和字母来代表网页文件在网上的地址。Web
      上所能访问的资源都有唯一的 URL。URL
@@ -569,6 +593,9 @@ TCP/IsP 通信协议来传递数据的应用最为广泛的一种网络传输协
 部分组成：请求行，请求头以及请求正文。其中请求行的格式是：\ ``请求方法 URI 协议/版本``\ 。HTTP
 1.0 中定义了 3 种请求方法，而在 HTTP 1.1 中又新增了 5 种；所以目前的
 HTTP 协议一共包括 8 种请求方法：
+
+.. figure:: pic/202104/http_2.png
+   :align: center
 
 方法名称区分大小写，当某个请求所针对的资源不支持对应的请求方法时服务器应当返回状态码
 405（Mothod Not
@@ -591,6 +618,9 @@ SQL、存储过程以及高级映射，且免除了几乎所有的 JDBC
 代码中设置参数和获取结果集的工作；MyBatis 可以通过 XML
 配置或注解两种方式来映射原始类型、接口、POJO
 等数据并将记录反馈到数据库中。MyBatis 的工作原理如下图所示：
+
+.. figure:: pic/202104/MyBatis.png
+   :align: center
 
 1. | MyBatis 工作流程：
    | ① 读取配置文件：mybatis-config.xml 配置了数据库连接等 MyBatis
@@ -620,6 +650,10 @@ SQL、存储过程以及高级映射，且免除了几乎所有的 JDBC
    | ③ 会话：一个既可以发送 SQL 执行返回结果，也可以获取 Mapper 的接口；
    | ④ 映射器：由会话工厂创建 SqlSession 对象，该对象中包含了执行 SQL
      语句的所有方法。
+
+.. figure:: pic/202104/MyBatisComponent.png
+   :align: center
+   :scale: 25
 
 名词解释 *session*\ ：session, n.一段时间,
 学年；当访问服务器否个网页的时候,会在服务器端的内存里开辟一块内存,这块内存就叫做

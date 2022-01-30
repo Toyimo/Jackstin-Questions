@@ -107,6 +107,9 @@ Ajax 数据更新
 关于 HTTP 超文本传输协议以及 URL
 统一资源定位器的研究是展开网络端相关工作的基础，虽然这两个东西已经查询过很多遍了，但还是容易忘记，这里对其作个简单记录。
 
+.. figure:: pic/202105/http.png
+   :align: center
+
 引用别人对这两个重要概念的论述：
 
    **HTTP 超文本传输协议**\ （Hypertext transfer protoco）
@@ -135,6 +138,9 @@ Ajax 数据更新
 
 在 Cesium 系统框架中使用的参考椭球是 WGS84
 椭球，为了便于日后计算相关参数，这里列举一些常用的大地测量学参考椭球如下表所示：
+
+.. figure:: pic/202105/sphere.png
+   :align: center
 
 代入 WGS84 椭球参数，可得到子午圈弧长计算公式如下：
 
@@ -225,6 +231,10 @@ ArcGIS
 | :math:`dist_i` 为点 :math:`i` 和 :math:`(x,y`)
   位置之间的距离，\ :math:`n` 为 POI 点的个数。
 | :math:`radius` 为搜索半径，也就是核函数的带宽，参见参考文献[24]。
+
+.. figure:: pic/202105/bandwidth.png
+   :align: center
+   :scale: 23
 
 **（2）heatmap.js 绘制机制**
 
@@ -347,6 +357,10 @@ invalid s 的回答：
 HTTP Basic Authentication 鉴权方式是 HTTP
 协议实现的基本认证方式，我们在浏览网页时，从浏览器正上方弹出的对话框要求我们输入账号密码，正是使用了这种认证方式。
 
+.. figure:: pic/202105/authentication.png
+   :align: center
+   :scale: 20
+
 认证成功后，客户端每次发送请求都会带上 Authorization 头部参数，除了使
 Session
 过期外，客户端主动注销可采用如下方案：首先需要服务端专门设置一个专门用于注销的账号，客户端主动修改请求头
@@ -358,6 +372,10 @@ Base64
 随着互联网技术的发展，传统验证方式已鲜少有人在用，本章节从网络端会话出发研究一下
 Cookie、Session 以及 Tocken 等概念，为后续研究作一个铺垫。下图展现了
 HTTP、Cookie 以及 Session 之间的关系：
+
+.. figure:: pic/202105/cookie.png
+   :align: center
+   :scale: 18
 
 HTTP协议本身是无状态的，即服务器无法判断用户身份。Cookie 实际上是一小段
 key-value
@@ -371,6 +389,10 @@ Cookie 和 Session
 的框架是不予许跨域的，但现在各个互联网厂商在使用微服务来降低系统平台各个功能之间的耦合性，将一个个功能拆分为不同的服务；拆分为服务之后，每个服务之间的域名或者
 IP 是不一样的，这样一来不同服务之间进行联动时，浏览器的 Cookie
 将不能跨域携带，这个\ **鉴权**\ （Authentication）也就失效了。
+
+.. figure:: pic/202105/token.png
+   :align: center
+   :scale: 18
 
 为了解决这个跨域问题，并减轻服务器的压力，人们设计了 Token
 这个概念。Token
@@ -610,6 +632,10 @@ CMD 实时回显
    //optional_argument(即2)，表明这个长参数后面带的参数是可选的，（即：--name和--name Bob）
 
 哈哈哈，新版本 2.0 发布！如下图。
+
+.. figure:: pic/202105/PP2.0.jpg
+   :align: center
+   :scale: 60
 
 由此，关于 PP
 工具的开发终于可以告一段落了。下文过一一一一一一一段时间再说。

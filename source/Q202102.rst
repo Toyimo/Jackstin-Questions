@@ -101,6 +101,10 @@ C++标准类库中的 ofstream, ifstream 和 fstream 类是分别从ostream, ist
 和iostream 中引申而来的。这就是为什么 fstream
 的对象可以使用其父类的成员来访问数据。
 
+.. figure:: pic/202102/iostream.jpg
+   :align: center
+   :scale: 80
+
 暂时先放这儿，有空加深一下记忆，不然每次都要百度。
 
 .. _22-静态链接库与动态链接库:
@@ -150,6 +154,9 @@ Q3、矢量功能模块收尾
 
 设计思路已写在纸上，有空填进来。算法示意图如下图所示。
 
+.. figure:: pic/202102/delink.jpg
+   :align: center
+
 .. _32-解除算法的调用时机:
 
 3.2 解除算法的调用时机
@@ -163,6 +170,10 @@ Q4、能源集团全景功能
 
 经过两个星期的努力，能源集团全景功能的添加业已基本完成，但系统的标注可能还需要一点点助力和完善；首先改进标注的间隙，在其上添加几个分区标注来改善这密密麻麻的标注。
 
+.. figure:: pic/202102/biaozhu.png
+   :align: center
+   :scale: 48
+
 如上图所示稍微改进一下喽。中心城区暂时不用太动，添加北辰、红桥、河东、西青、河西五个中层标注信息。
 
 Q5、ArcPy 精度问题
@@ -175,6 +186,10 @@ CopyFeatures_management 精度问题
 
 在利用 arcpy.CopyFeatures_management 函数将创建的点要素转换为 shape
 文件时遇到了如下问题。
+
+.. figure:: pic/202102/arcpy_point.jpg
+   :align: center
+   :scale: 48
 
 如上图所示，蓝绿色点为正确点位，红色点为生成点位。生成点位的精度被取舍到
 0.0001 位，从而导致生成的 shape

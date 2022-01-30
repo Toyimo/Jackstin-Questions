@@ -44,6 +44,10 @@ OSG
 **访问者模式**\ 是一种将数据操作和数据结构分离的设计模式，表示一个作用于某对象结构中的各元素的操作。这里拿
 osg::NodeVisitor 访问者模式的设计来进行分析。
 
+.. figure:: pic/202103/Visitor.png
+   :align: center
+   :scale: 48
+
 如上图所示，一般而言访问元素是不能轻易变化的，所以 OSG 将 Node
 作为大多数节点的父类来设计节点访问器，这样一来在一些需要进行自定义访问函数的地方就可以直接继承访问者来设计我们需要的节点访问器了。
 
@@ -175,6 +179,9 @@ OpenGL 对象：
 的释放上了。这里继承 OverlayNode 给他写个函数 ``releaseTextureObject()``
 即可清空当前 Overlay 节点下的所有纹理状态。重写时，不去析构所有的 Group
 字节点即可解决模型变黑的问题。
+
+.. figure:: pic/202103/Node_hidden.png
+   :align: center
 
 设置显示隐藏的策略是：通过程序主窗体获取矢量节点的文件名 >>
 通过文件名获取矢量节点所链接的模型名 >> 通过模型名找到 Ovelay 节点 >>
@@ -356,6 +363,10 @@ ID，代码为：
 的加包也无法根治问题。所以问题出在 pyinstaller 所使用的 Python
 版本不对。折腾半天，还是直接换函数好了，服了。
 
+.. figure:: pic/weibo/tieba_emotion_08.png
+   :align: center
+   :scale: 24
+
 .. _33-gvim打印代码带行号:
 
 3.3 GVIM打印代码带行号
@@ -420,6 +431,9 @@ B3DM 文件由 28 字节的文件头和 :math:`x` 字节的文件体构成；头
 字节分别以 4 字节整形变量存储 Featrue Table、Batch Table 的 JSON
 字节长度和二进制文件长度。
 
+.. figure:: pic/202103/b3dm.png
+   :align: center
+
 如上图所示，B3DM 格式作为 3DTiles 网络端三维模型存储格式中的一种，共享
 3DTiles 的通用头文件和文件体的结构和布局。B3DM
 文件体也可存储\ **属性表（\ Feature Table\ ）**\ 和\ **批次表（\ Batch
@@ -438,6 +452,10 @@ Body
 则以紧凑二进制的形式存储了相关属性的实际数值，使用二进制值的唯一方式是通过
 JSON Header 中存储的偏移量寻访相应的数据段。
 
+.. figure:: pic/202103/FeatureTable.png
+   :align: center
+   :scale: 20
+
 对于所有 3DTiles 格式而言 Feature Table
 都是必要的，该属性表存储了一些瓦片中要素绘制的关键几何值数组，这些存储在
 Feature Table
@@ -454,6 +472,14 @@ Batch Table
 则不那么必要了，这里存储的是类似二维地理信息系统中文本属性的信息。批次表
 Batch Table
 也能够存储诸如瓦片中要素个数一类的全局信息，也可存储相关的要素属性信息；只不过在存储其他要素属性时，由于批次表中存储的信息与应用相关，故而要指定二进制组件的基本类型以及组件容器数组的类型。由类型的比特位数即可计算出二进制体中属性数据所对应的数据段。
+
+.. figure:: pic/202103/componentType.jpg
+   :align: center
+   :scale: 60
+
+.. figure:: pic/weibo/doge_lv.png
+   :align: center
+   :scale: 30
 
 B3DM 格式的属性表 Feature Table 存且仅存（）全局属性信息：而其批次表
 Batch Table 存储了该批文件中存储的模型要素个数 ``BATCH_LENGTH``
@@ -608,6 +634,10 @@ EntitysCodeGenerate
 
 从数据库中生成表对应的 VB/C# 实体代码，可实现数据库列和 VB/C#
 代码类型的映射、实体命名空间、代码个性化注释、是否生成对应的数据库操作等。同时通过实体可实现简单数据库添加、修改、删除、查询等操作，对添加和修改提供一个统一的保存操作（即实体会根据主键或实体条件值自动判断是更新还是插入）。
+
+.. figure:: pic/202103/EntitysCodeGenerate.png
+   :align: center
+   :scale: 60
 
 该工具属于程序员自己实现的简易 OMR 数据实体转换工具，支持 Oracle、SQL
 Server、Access、MySQL、Sybase、SQLite、DB2、OleDb、PostgreSQL、DM（达梦）以及PowerDesigner
@@ -777,6 +807,10 @@ Lambda 表达式，如下面的两段代码：
 ``ICollection``\ 、\ ``IList``\ 、\ ``IDictionary``\ 、\ ``IEnuerable``
 接口及其泛型版本，例如 ``IEnuerable<T>``\ ；集合都直接或间接的派生自
 ``IEnumerable``\ 接口。
+
+.. figure:: pic/202103/SetInterface.png
+   :align: center
+   :scale: 18
 
 LINQ 查询结果会根据 C# 的集合接口放到对应的集合中。LINQ
 的分组查询是非常具有代表性的一种查询机制，该查询通过两层循环来得到分组以及分组中的项，其示例代码如下：

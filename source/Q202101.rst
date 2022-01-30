@@ -86,6 +86,9 @@ Values》**\ ，这里的 TC 即 Texture Compression。本章参考文献 [1]
 的保存选项，在导出图像时对图像进行压缩，然后在将图像文件导入到模型当中时直接压缩文件流以实现对保存的
 \*.osgb 文件的压缩：
 
+.. figure:: pic/202010/osgformat.png
+   :align: center
+
 用 WriteImageHint=IncludeFile 来直接对文件进行压缩并写入文件流。但是在
 VS 2013 X64 位 OSG 3.4.0 版本库中使用这一命令遇到了如下错误：
 
@@ -287,6 +290,10 @@ DISTANCE_FROM_EYE_POINT 两种控制细节层次节点的方式。取
 一般取
 :math:`\mathrm{fovy}=30°,(H,W)=(1080,1980)`\ ，各个参数的联系如下图所示：
 
+.. figure:: pic/202101/PIXEL_SIZE_ON_SCREEN.png
+   :align: center
+   :scale: 50
+
 则根据距视点的距离 :math:`l` 计算在屏幕中的像素大小 :math:`p`
 的方式如下：
 
@@ -346,6 +353,12 @@ OSG 三维渲染引擎的高效、资源占用较小的高级技巧主要有四�
 
 直接作用于Unity 镜头的滤镜 SDK 插件 Post Processing Stack
 提供了一个比较有趣的后处理渲染结果，这里直接引用这张图片，这张Bloom的效果图片具备很高的参考价值：
+
+.. figure:: pic/202101/unity_post_processing.png
+   :align: center
+   :scale: 50
+
+这里的内容后续再行研究，因为项目需要，此项研究暂时搁浅。
 
 .. _42-延迟渲染:
 
