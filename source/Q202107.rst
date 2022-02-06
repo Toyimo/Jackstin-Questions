@@ -40,7 +40,7 @@ Error 计算方法了。\ **但是！！**\ 事实上源代码作者 MrBigDog
 来在不读取子节点的前提下根据父节点半径计算出所需要的子节点的 Geometric
 Error，不得不说还挺有道理的，但效果确实需要调整。
 
-.. figure:: C:\Users\Administrator\Desktop\Jaxin's%20question%20list\pic\202107\CurveFiting.png
+.. figure:: pic/202107/CurveFiting.png
    :alt: 
 
 在接下来的测试中，令 :math:`x=r/\text{ScreenPixels}` 则可在 Matlab
@@ -347,6 +347,10 @@ Cesium 来搞，但是 Cesium 又没有对带文字的 Billbord
 
 参照《能源集团项目7-21会议纪要》关于三维展示系统热力图、直方图参数选择逻辑的要求，设计如下面板。
 
+.. figure:: pic/202107/heatmap-params.png
+   :align: center
+   :scale: 60
+
 JS 原生 AJAX
 ^^^^^^^^^^^^
 
@@ -553,6 +557,9 @@ geojson
 ``QueryLayerAttibutesByClickHandler``
 的代码关系，可根据相关功能的调用关联制作如下 UML 类图：
 
+.. figure:: pic/202107/QueryTool.png
+   :align: center
+
 由上图可知，进行矢量查询时只需写好查询工具并在相关代码中进行工具的注册即可；至于具体的使用案例可以参考
 Extention 2 类库的 GuiEventAdapterEx2.cpp
 文件。需要注意的是，具体在程序中调用已注册的哪个工具需要在
@@ -622,6 +629,9 @@ Case**\ 。这里记录一句话，最优子结构就是通过穷举得到所有
    该问题的核心是列出决策树的所有路径，不使用数组交换策略时选择列表元素可以通过判断选择列表中的元素是否在
    track 中来变相的获取，由此可消除决策树中的重复元素。
 
+   .. figure:: pic/202107/permute.png
+      :align: center
+
    | 需要注意的是：
    | **a**. Python 的数组包含判断可以用 ``if a in array`` 来表达；
    | **b**. Python 没有 swap 函数，其数据交换可用 ``a,b = b,a`` 的形式；
@@ -631,6 +641,8 @@ Case**\ 。这里记录一句话，最优子结构就是通过穷举得到所有
 2. | N皇后问题
    | Some interest things of **Eight queens**
 
+   .. figure:: pic/202107/N-queen.png
+      :align: center
    | 
    | 该问题与上面的全排列问题保有很强的相似性，只不过在回溯算法中执行了严格的选择和撤销操作，判断当前位置无法放置皇后时就撤回当前选择。
 

@@ -27,6 +27,7 @@ Welcome to Jackstin's question list's documentation!
    Q202109.rst
    Q202110.rst
    Q202111.rst
+   Q202112.rst
 
 Indices and tables
 ==================

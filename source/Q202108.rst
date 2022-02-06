@@ -416,6 +416,9 @@ secured。修改后，需要将 geowebcache 发布服务的坐标系指定为 EP
 
 关于矢量查询的代码，在深入研究的基础上发现其使用代码如下：
 
+.. figure:: pic/202108/QueryTool.png
+   :align: center
+
 矢量查询代码是继承于 QueryInShpTool
 而写的代码。继承的方法直接可以在子类中使用；而我们所要做的就是利用
 QueryManager
