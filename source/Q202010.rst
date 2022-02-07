@@ -5,7 +5,9 @@ Question List in October, 2020
 
 🌊 I love ocean because the immutable wave and the Zima blue.
 
-如来所说法，皆不可取、不可说、非法、非非法。所以者何？一切贤圣，皆以无为法而有差别。
+.. raw:: html
+
+   <html xmlns="http://www.w3.org/1999/xhtml"><head></head><body><font size="4" face="华文楷体">如来所说法，皆不可取、不可说、非法、非非法。所以者何？一切贤圣，皆以无为法而有差别。</font></body></html>   
 
 本月的任务主要是利用四叉树索引重建实景模型的顶层索引，上月还没有解决的问题有：顶层重建模型的纹理图片较大、重建顶层后某些层级的瓦片切换会出现空缺现象。
 
