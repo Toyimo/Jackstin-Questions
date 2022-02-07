@@ -5,7 +5,10 @@ Question List in November, 2020
 
 🌨 Something we loved always leave us alone.
 
-十品庄严净土。“是故须菩提！诸菩萨摩诃萨应如是生清净心，不应住色生心，不应住声香味触法生心，应无所住而生其心。须菩提！譬如有人，身如须弥山王，于意云何？是身为大不？”须菩提言：“甚大，世尊！何以故？佛说非身，是名大身。”
+.. raw:: html
+
+   <html xmlns="http://www.w3.org/1999/xhtml"><head></head><body><font size="4" face="华文楷体">十品庄严净土。“是故须菩提！诸菩萨摩诃萨应如是生清净心，不应住色生心，不应住声香味触法生心，应无所住而生其心。须菩提！譬如有人，身如须弥山王，于意云何？是身为大不？”须菩提言：“甚大，世尊！何以故？佛说非身，是名大身。”</font></body></html> 
+
 
 .. _header-n4:
 
