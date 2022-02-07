@@ -348,7 +348,7 @@ PagedLOD的相对路径
 
 .. figure:: pic/202010/gap.bmp
    :align: center
-   :scale: 20
+   :scale: 40
 
 目前一个可行的方案是适当扩大包围盒的范围，这样一来可以粗暴的解决这一问题，但存在隐患的噻。后续改进等白边问题处理解决之后，再看看能不能回来考虑这个问题。
 
@@ -374,7 +374,7 @@ PagedLOD的相对路径
 
 由此，解决生成地形时产生的接边缝隙问题。
 
-.. figure:: pic\weibo\d_19.png
+.. figure:: pic/weibo/d_19.png
    :align: center
    :scale: 48
 
