@@ -327,18 +327,18 @@ Element，而国外开发者依旧很喜欢由 Twitter 公司开发的 Bootstrap
 
 ⭐️⭐️⭐️⭐️ *Prashantsani* 响应式布局 `连接 <https://prashantsani.com/>`__
 
-.. figure:: pic/202112/prashantsani.png
+.. figure:: pic/202112/Prashantsani.png
    :align: center
 
 ⭐️⭐️⭐️⭐️ *Suzesh Muzali* 非响应式布局
 `连接 <https://sureshmurali.github.io/>`__
 
-.. figure:: pic/202112/suzesh.png
+.. figure:: pic/202112/Suzesh.png
    :align: center
 
 ⭐️⭐️⭐️⭐️ *Mattfarley* 响应式布局 `连接 <https://mattfarley.ca/>`__
 
-.. figure:: pic/202112/mattfarley.png
+.. figure:: pic/202112/Mattfarley.png
    :align: center
 
 .. _header-n557:
