@@ -28,6 +28,8 @@ Welcome to Jackstin's question list's documentation!
    Q202110.rst
    Q202111.rst
    Q202112.rst
+   Q202201.rst
+   Q202202.rst
 
 Indices and tables
 ==================
