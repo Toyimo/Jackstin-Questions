@@ -397,5 +397,3 @@ passing 'const xxx ' as 'this' argument discards qualifiers
 
 13. CSDN 博客. `# passing 'const xxx ' as 'this' argument discards
     qualifiers <https://blog.csdn.net/creambean/article/details/89222454>`__\ [EB/OL].
-
-.. |image1| image:: D:\Ashinjero\Jaxin's%20question%20list\2209-2307-Baidu\pic\202301\bezier.gif
