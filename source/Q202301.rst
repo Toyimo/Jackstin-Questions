@@ -183,10 +183,6 @@ Bézier Curve 于 1962 年由法国工程师 *Pierre Bézier*
 个控制点对应着 :math:`n-1`
 阶的贝塞尔曲线，并且可以通过递归的方式来绘制。
 
-   .. figure:: pic/202301/bezier.gif
-      :align: center
-      :alt: 贝塞尔曲线
-
 **Pt. :math:`2`\ ：一阶公式**\ ，给定点 :math:`P_0,P_1`
 贝塞尔曲线表现为两点间的直线，\ :math:`t\in[0,1]`\ 。
 
