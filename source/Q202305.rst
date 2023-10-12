@@ -1,0 +1,227 @@
+Question List in May, 2023
+==========================
+
+.. _1工作记录:
+
+1、工作记录
+-----------
+
+.. _w3-0515-to-0519:
+
+W3. 0515 to 0519
+~~~~~~~~~~~~~~~~
+
+1. | (1) 调查修复 icafe 上 5 个 SD 斑马线/停止线卡片问题；
+   | a. 修复切线分组异常引起的上下行斑马线合并失败问题；
+   |  b. 修复部分斑马线没有对齐的问题；
+   | (2) 进行 SD 质检项 Quality Check 类设计，开发路口统计项；
+
+2. 完善 SD 质检项的类设计，进行路口质检项 B2、B3、B4 的开发；
+
+3. | (1) 完成质检项 B2 路口临边内凹的开发，待测试验证；
+   | (2) 进行质检项 B1 路口与路面衔接处空洞代码开发，进度 50%；
+
+.. _w4-0522-to-0526:
+
+W4. 0522 to 0526
+~~~~~~~~~~~~~~~~
+
+1. 上海 SOP 跟车路测；
+
+2. | (1) SOP 跟车路测报告 ；
+   | (2) 继续质检项 B1 路口与路面衔接处空洞代码开发，进度
+     70%，发现部分凸包计算错误引起的误报问题；路线 LINK
+     太长回环会出现大面漏洞；
+
+3. | (1) 修复部分 B1 误报异常:
+   |  (a) 修复凸包计算错误引起的空洞误报：修改 LINK 外廓几何计算规则；
+   |  (b) 修复 LINK 太长回环引起的大面积误报：添加面积限制（<100）;
+   | (2) 在 demo 数据范围内进行 B1 检测，检测的 1019 个路口中报出 13
+     处空洞，核实后 1 处疑似误报；目前此 demo 数据范围内 B1
+     路口与路面衔接处空洞检测正确率 92%；
+   | (3) SOP 跟车路测：0526 路测受降雨影响较大；
+
+.. _w5-0529-to-0602:
+
+W5. 0529 to 0602
+~~~~~~~~~~~~~~~~
+
+1. | (1) 合并代码上线路口 B1、B2 质检项代码，合并后 demo 多出 5 处 LINK
+     间缝隙误报；
+   |  (a). 苏州检测 364 处空洞，面积阈值 [0.01, 100]，随机抽样
+     40，正确率 57%；
+   |  (b). 分析检出的误报进主要为路口邻接两相邻 LINK
+     面之间的狭长小空洞；
+   |  (c). 部分城市质检项检出出现中断，正在进行排查；
+   | (2) 迁移 B3
+     路口面自相交统计项并完善该分类下路口面畸形的质检项代码；
+   | (3) 进行 B4
+     路口切线不垂直于道路面代码的开发：完成思路梳理，代码开发进度 50%；
+
+2. | (1) 30 城市质检项检测代码中断问题排查：geos 库 GEOSUnion_r 的
+     bug，由 nullptr 引起；
+   | (2) 完成 B4 路口切线不垂直于道路面代码开发并上线测试；
+   | (3) B1 误报参数优化：上调最小面积阈值滤除狭小缝隙误报，处理时考虑
+     LINK 高程因素；
+
+3. | (1) B1 空洞检测策略调整：
+   |  (a). 面积阈值调整并确认为：[1, 50]，滤除窄缝误报和特殊路口误报；
+   |  (b). B1
+     空洞检测考虑高程因素：进行布尔并集测试时添加相邻道路面高程均值检测；
+   | (2) 修正 B4 路口切线计算规则：
+   |  (a). 用平面投影坐标替换大地坐标计算单位方向向量，阈值 12°；
+   |  (b). 计算时同时参考左右两侧 LBR 方向向量，剔除部分误报；
+
+4. | (1) B1 空洞/B4
+     路口切线不垂直于道路面质检项的苏州全域测试，对应修正误报问题；
+   |  (a). B4 路口切线不垂直于道路面，垂角误差阈值调整为
+     20°，仅对复杂路口进行判断；
+   |  (b). 调查修复 B1
+     部分高程滤除未生效引起的误报问题，下调同一平面高程阈值为 2m；
+   | (2) 进行 A2 道路面缺失质检项代码的开发：完成思路梳理，代码开发进度
+     60%；
+
+5. | (1) A2 道路面缺失质检项：
+   |  (a). 0531 版本检出 2267，随机抽样 45 正确率 93%；
+   |  (b). 0602 版本检出个数为 0，数据对比后确认因 lbr
+     缺失引起的系统性问题均已修复；
+   | (2) B 系列路口质检项苏州全域准确率，其中 B2~B4
+     主要引起的渲染问题有斑马线超出或重叠、路口面渲染畸形；
+   |  (a). B1 空洞全域准确率测试：检出 73 处，抽样 40（55%）；正确率
+     90%；
+   |  (b). B2 路口面临边内凹测试：检出 378 处，抽样
+     40（10%）；人工核验有明确渲染问题的 14（35%），渲染问题较小的
+     24（60%），正确率估计约 95%，作为质检补充项；
+   |  (c). B3 路口面畸形测试：检出 59 处，抽样
+     20（34%）；人工核验有明确渲染问题的 7 处（35%），渲染问题不明显的
+     13 处（75%）；
+   |  (d). B4 切线不垂直全域测试：检出 77 处，抽样
+     30（40%），确有渲染问题比率 83%；
+   | 
+
+月度备忘录
+~~~~~~~~~~
+
+待办事项
+^^^^^^^^
+
+-  ☒ 切线不垂直典型位置：1524274894；周边有道路面空洞，便于检测；
+
+-  ☒ 短 LINK 道路面缺失是否要报出：像 121.010438,31.352777
+   这种位置，报出即可；
+
+-  ☐ 空洞漏报：1524389300；
+
+提交记录
+^^^^^^^^
+
+.. code:: bash
+
+   git commit -m "[mapauto6-84878] UPDOWN: fix cutline group error of md."
+   git commit -m "[mapauto6-84878] QC: add B1/B2 quality check report."
+   git commit -m "[mapauto6-84878] QC: add B3/B4; fix geos nullptr crash issue."
+   git commit -m "[mapauto6-84878] QC: add A2; optimize parameters for B."
+
+.. _2日常积累:
+
+2、日常积累
+-----------
+
+#cplusplus
+
+.. _21-c-实现-log-输出:
+
+2.1 C++ 实现 LOG 输出
+~~~~~~~~~~~~~~~~~~~~~
+
+可以在析构函数中输出换行符以便使用 ``LOG(INFO) << "hello"``
+时直接在末尾添加换行符，另外需要注意的就是宏展开中 ``##``
+是用于宏代码的拼接，可以将括号内的参数直接拼接到内容中。
+
+.. code:: cpp
+
+   class LogMessage{
+   public:
+       LogMessage(std::string message):_message(message){}
+       ~LogMessage(){
+           std::cout << std::endl;
+       }
+       std::ostream& stream(){
+           std::ostream& os = std::cout;
+           os << "[" << _message << "]: ";
+           return os;
+       }
+   private:
+       std::string _message;
+   };
+   #define COMPACT_LOG_INFO LogMessage("INFO")
+   #define COMPACT_LOG_WARNING LogMessage("WARNING")
+   #define COMPACT_LOG_ERROR LogMessage("ERROR")
+   #define LOG(severity) COMPACT_LOG_ ## severity.stream()
+
+.. _22-c-反射机制:
+
+2.2 C++ 反射机制
+~~~~~~~~~~~~~~~~
+
+   如果要实现反射，一般来实现有两种：一种是\ **静态反射**\ ，利用宏和模板在编译器就将反射函数对应展开，因此没有什么开销；另一类是\ **动态反射**\ ，程序中对每一个注册过反射类型的对象保存着一张表，通过查找表去做相应动作。总体来说，任何语言实现反射都离不开保存一张查找表，然后对应展开的过程，无非就是静态动态，编译器做还是用户做了。
+
+.. code:: cpp
+
+   #include <unordered_map>
+   #include <string>
+   #include <iostream>
+   #include <stdlib.h>
+
+   class Test
+   {
+   public:
+   	void a(){std::cout<<"I am a"<<std::endl;}
+   	void b(){std::cout<<"I am b"<<std::endl;}
+   	void c(){std::cout<<"I am c"<<std::endl;}
+    	std::unordered_map<std::string,void (Test::*)()>funcList;
+   	Test(){
+   		funcList.emplace("a",&Test::a);
+   		funcList.emplace("b",&Test::b);
+   		funcList.emplace("c",&Test::c);
+   	};
+   public:
+   	void demo(){
+   	    (this->*funcList.at("c"))();
+   	}
+   };
+
+   int main(void){
+   	Test test;
+   	void (Test::*ptr)()=test.funcList.at("a");
+   	(test.*ptr)();                   // 第一种调用方法
+   	(test.*test.funcList.at("b"))(); // 第二种调用方法
+   	test.demo();                     // 第三种调用方法
+   	return 0;
+   }
+
+   //结果：
+   //I am a
+   //I am b
+   //I am c
+
+参考文献
+~~~~~~~~
+
+1. 知乎. `#
+   借助宏和模板技术实现C++的简单静态反射 <https://zhuanlan.zhihu.com/p/421640680>`__\ [EB/OL].
+
+2. 知乎. `#
+   C++模板寄算：简单的成员反射 <https://zhuanlan.zhihu.com/p/541310979>`__\ [EB/OL].
+
+3. 知乎. `#
+   如何优雅的实现C++编译期静态反射 <https://zhuanlan.zhihu.com/p/165993590>`__\ [EB/OL].
+
+4. CSDN 博客. `# C++
+   对象的成员函数反射 <https://blog.csdn.net/ermeiyao11/article/details/104512928/>`__\ [EB/OL].
+
+5. CSDN 博客. `#
+   C++语言学习（十四）——C++类成员函数调用分析 <https://blog.csdn.net/weixin_33981932/article/details/92651696>`__\ [EB/OL].
+
+6. CSDN 博客. `#
+   C++类成员函数模拟实现反射 <https://blog.csdn.net/weixin_38693938/article/details/108526990>`__\ [EB/OL].

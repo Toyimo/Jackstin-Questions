@@ -1,0 +1,289 @@
+Question List in August, 2023
+=============================
+
+.. _1日常积累:
+
+1、日常积累
+-----------
+
+| S3M, Spatial 3D Model File of ©SuperMap.
+| I3S, Indexed 3D Scene Layer of ©ESRI, Environmental Systems Research
+  Institute.
+
+.. _11-超图-s3m-数据格式:
+
+1.1 超图 S3M 数据格式
+~~~~~~~~~~~~~~~~~~~~~
+
+超图团队在 2015 年提出了 3 种单体化方法：虚拟动态单体化、ID
+单体化、切割单体化。S3M 设计中更多使用的方法是 ID
+单体化：即\ **三角面片中的每个顶点都对应存储一个 32 位的唯一标识
+ID**\ ；由此确保在渲染时能够借助顶点着色器高效选中与高亮、批量改变对象颜色、以及批量改变对象的可见性。2017
+年，超图决定在 github 上开源出 S3M 的细节，同时将 S3M 的定义由 SuperMap
+3D Model 变更为 Spatial 3D Mode。其官网博客中提到了设计 S3M 格式时的 6
+点原则：
+
+1. 通过 3D
+   瓦片将三维模型组织到一起，以方便在渲染时批次绘制，减少往显卡传输数据的次数，充分利用好带宽。
+
+2. 通过树状结构组织不同细节层次的全要素 3D 瓦片文件，以降低几何复杂度。
+
+3. **每个顶点对应存储一个 ID，在多个模型组合成同一批的同时借助 GPU
+   实现高效对象化查询。**
+
+4. **通过实例化的方式存储，解决 BIM 模型对象被多次重复引用的问题。**
+
+5. 3D 瓦片的数据组织对应 OpenGL 的 API ，以支持快速填显卡。
+
+6. OpenGL 的 API
+   支持点、线、三角网等对象的绘制，对应的数据格式也可支持点、线、三角网等多种类型的数据。
+
+在实现细节上，有几点需要注意：
+
+1. | S3M
+     通过一种文件类型支持各类数据，采用数据文件和描述索引文件分离的数据结构：
+   | (1) 数据文件 .s3mb 描述了一个空间范围内的三维瓦片数据；
+   | (2) 索引文件 .json
+     是对瓦片数据的树形结构的描述，数据文件中也同步存储了该描述信息；
+   | (3) 描述文件 .scp 描述整个场景所有瓦片数据的基本信息；
+
+2. S3M 是通过在每个顶点对应存储一个 ID 实现3D瓦片的对象化的；
+
+3. S3M 的属性切片文件，有单独的 s3md 文件存储，只有根节点有，没有冗余；
+
+4. 3D-Tiles 模型的切片采用 glTF 格式，而 S3M 的几何切片文件是 s3mb
+   文件；
+
+超图于 2017 年开放了 S3M V1.0 的标准和 SDK，通过 SDK
+可以获取到指定文件的顶点和纹理等模型信息，但该标准并不一定适用于 V2.0 和
+V3.0 版本，是一个后续开发的隐患。
+
+1. 标准: http://gi.mnr.gov.cn/202305/P020230525424482053086.pdf
+
+2. ReaderWriter: https://github.com/SuperMap/s3m-spec
+
+.. _12-esri-i3s-数据格式:
+
+1.2 Esri I3S 数据格式
+~~~~~~~~~~~~~~~~~~~~~
+
+ArcGIS 基于 I3S 标准在桌面端的三维数据格式是 multipatch，Web
+端和移动端是 SLPK，其中在 Web 端的 SLPK
+是用来发服务的交换缓存格式，在移动端的 slpk 用作离线数据。SLPK 即 Scene
+Layer Package 的缩写。
+
+1. 标准: https://docs.ogc.org/cs/17-014r9/17-014r9.html#i3scrs
+
+2. Writer: https://github.com/Esri/i3s-lib
+
+3. Reader: https://github.com/melowntech/libslpk
+
+#地理数据下载
+
+.. _13-倾斜摄影模型下载:
+
+1.3 倾斜摄影模型下载
+~~~~~~~~~~~~~~~~~~~~
+
+1. 香港空间数据共享平台
+   `URL <https://portal.csdi.gov.hk/geoportal/#metadataInfoPanel>`__\ ：重命名文件夹名并处理
+   metadata.xml 后进行使用。
+
+2. 香港半岛和九龙半岛数据模型
+   `URL <https://www.pland.gov.hk/pland_sc/info_serv/3D_models/download.htm>`__\ ：直接勾选网格进行下载。
+
+3. 无人机公司 Wingtra 示例数据
+   `URL <https://wingtra.com/mapping-drone-wingtraone/aerial-map-types/data-sets-and-maps/>`__:
+   提供原始航拍影像，Bently ContextCapture 模型未提供。
+
+.. _2程序与算法:
+
+2、程序与算法
+-------------
+
+.. _21-c:
+
+2.1 C++
+~~~~~~~
+
+#cplusplus
+
+实现单例类
+^^^^^^^^^^
+
+.. code:: cpp
+
+   class SHPCreator {
+   public:
+   	static SHPCreator& instance() {
+   		static SHPCreator creator;
+   		return creator;
+   	}
+   }
+
+实现 var 类型
+^^^^^^^^^^^^^
+
+.. code:: cpp
+
+   // c++11 自定义可变 KeyValue 类型更为适合
+   // c++17 可以更便捷的用 auto 定义 var 类型
+   struct KeyValue {
+   public:
+   	std::string                                                      key;
+   	enum  Type  { INTEGER, DOUBLE, STRING }                          type;
+   	union Value { int Integer; double Double; std::string* String; } value;
+   public:
+   	~KeyValue() {
+   		if (type == STRING) {
+   			delete value.String;
+   		}
+   	}
+   };
+
+成员变量的别名
+^^^^^^^^^^^^^^
+
+.. code:: cpp
+
+   class Point {
+   public:
+   	union {
+   		struct { double x, y, z, w; };
+   		struct { double u, v, m, k; };
+   		struct { double X, Y, Z, W; };
+   	};
+   }
+
+QT 调用外部程序并在运行结束后反馈
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. code:: cpp
+
+   QString folder = QCoreApplication::applicationDirPath();
+   QString program = folder + "/shp2obj/pro.02.road.exe";
+   QStringList params;
+
+   QProcess* process = new QProcess(this);
+   connect(process, &QProcess::finished, this, &shp2obj::exe_finished);
+   process->start(program, params);
+
+大小端
+^^^^^^
+
+小端 Little–Endian，大端
+Big-Endian。二进制数据从右向左存储，左边是高位，右边是低位；二进制文件内存从左向右，左边是低地址，右边是高地址。
+
+   | 小端模式，是指数据的高字节保存在内存的高地址中，而数据的低字节保存在内存的低地址中
+   | 大端模式，是指数据的高字节保存在内存的低地址中，而数据的低字节保存在内存的高地址中
+
+也即：
+
+   在保存数值的二进制字节时，若先保存数值的高位则是大端，若先保存数值的低位则是小端。
+
+   .. figure:: image/2309-endian.png
+      :align: center
+
+.. code:: cpp
+
+   typedef unsigned char     Byte;
+   typedef std::vector<Byte> Bytes;
+
+   uint32_t to_uint32(Bytes& bytes)
+   {
+       uint32_t x = bytes[0];
+       for (int i = 1; i < 4; ++i) x = (x << 8) | bytes[i];
+       return x;
+   }
+
+   float to_float32(Bytes& bytes)
+   {
+       uint32_t x = bytes[0];
+       for (int i = 1; i < 4; ++i) x = (x << 8) | bytes[i];
+       static_assert(
+   	    sizeof(float) == sizeof(uint32_t), 
+   	    "Float and uint32_t size dont match. Check another int type"
+       );
+       float f{};
+       std::memcpy(&f, &x, sizeof(x));
+       return f;
+   }
+
+.. _22-坐标归一化:
+
+2.2 坐标归一化
+~~~~~~~~~~~~~~
+
+问题描述。给定由 :math:`n` 个点构成的多边形
+:math:`\mathbf{P}=\{P_i=(x_i\ \ y_i\ \ z_i)^T|i\in[1,n]\}`
+，对该多边形进行坐标归一化处理的算法流程可以描述为：计算并保存参数→归一化坐标→反算原始坐标。
+
+1. | 计算并保存参数：
+
+   .. math::
+
+      \begin{align}
+     \mathrm{parameters}&=\{x_{\min},x_{\max},y_{\min},y_{\max}\}\\
+     &=\{x_{\min},\Delta_x,y_{\min},\Delta_y\};\Delta_x=x_{\max}-x_{\min},\Delta_y=y_{\max}-y_{\min}
+     \end{align}
+
+2. 归一化坐标及坐标反算：
+
+   .. math::
+
+      P_i'=\begin{pmatrix}
+      (x_i-x_{\min})\cdot s/\Delta_x\\
+      (y_i-y_{\min})\cdot s/\Delta_y\\
+      z_i
+      \end{pmatrix}, P_i=\begin{pmatrix}
+      x_i'\cdot\Delta_x/s+x_{\min}\\
+      y_i'\cdot\Delta_y/s+y_{\min}\\
+      z_i
+      \end{pmatrix},s=1\times10^3
+
+   以上方法采用 XY
+   方向分别归一化的方式进行计算，计算较为便捷，考虑地理坐标 BLH
+   体系的特殊性未采用 XY 同除 Z
+   的投影空间转规范化设备坐标空间的方式。为确保等比缩放，引入：
+
+   .. math::
+      
+      factor=\Delta_y/\Delta_x
+
+参考文献
+~~~~~~~~
+
+1.  博客园.
+    `超图的倾斜摄影优化方案：《空间三维模型数据格式》标准 <https://www.cnblogs.com/lyggqm/p/16455668.html>`__\ [EB/OL].
+
+2.  betheme. `# SuperMap GIS 倾斜摄影数据优化
+    QA <https://betheme.net/dashuju/50793.html?action=onClick>`__\ [EB/OL].
+
+3.  郑州代理记账.
+    `ArcGIS三维数据 <https://www.exyb.cn/news/show-483896.html>`__\ [EB/OL].
+
+4.  CSDN 博客. `OSGB 倾斜摄影数据处理为 3DTiles、I3S、S3M
+    的流程 <https://blog.csdn.net/yinweimumu/article/details/129813053>`__\ [EB/OL].
+
+5.  知乎. `发布并浏览超图 S3M
+    数据 <https://zhuanlan.zhihu.com/p/466967098>`__\ [EB/OL].
+
+6.  维基百科. `Wavefront .obj
+    model <https://en.wikipedia.org/wiki/Wavefront_.obj_file>`__\ [EB/OL].
+
+7.  OBJ 标准. `Object
+    Files(.obj) <http://fegemo.github.io/cefet-cg/attachments/obj-spec.pdf>`__\ [EB/OL].
+
+8.  知乎. `3D
+    格式概述：OBJ <https://zhuanlan.zhihu.com/p/443254673>`__\ [EB/OL].
+
+9.  博客园.
+    `复杂多边形的三角剖分 <https://www.cnblogs.com/charlee44/p/14903754.html>`__\ [EB/OL].
+
+10. CSDN 博客.
+    `CGAL-5.6的安装与编译（Win10+vs2022+CGAL-5.6+Boost1.82.0） <https://blog.csdn.net/baidu_34931359/article/details/132131410>`__\ [EB/OL].
+
+11. CSDN 博客. `#
+    二进制、16进制、大端小端 <https://blog.csdn.net/android_cai_niao/article/details/121421706>`__\ [EB/OL].
+
+.. |image1| image:: D:\Ashinjero\Jaxin's%20question%20list\2308-GeoScene\pic\2309-endian.png

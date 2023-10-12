@@ -1,0 +1,260 @@
+Question List in July, 2023
+===========================
+
+.. _1工作记录:
+
+1、工作记录
+-----------
+
+月度备忘
+~~~~~~~~
+
+待办事项
+^^^^^^^^
+
+-  ☒ A1 质检项过宽检测增加 10 条车道的过滤；
+
+-  ☒ 优化 LINK 间衔接处平滑处理逻辑；
+
+提交记录
+^^^^^^^^
+
+.. code:: bash
+
+   git commit -m "[mapauto6-84878] QC: fix C2 zebra overlap crash issue."
+   git commit -m "[mapauto6-34049] UID: add UIDManager for FID refresh."
+   git commit -m "[mapauto6-84878] QC: fix A1 over 10 lanes mistake."
+   git commit -m "[mapauto6-34049] UID: update FID for BD_OBJ_PRTY_PLUS."
+   git commit -m "[mapauto6-84878] ZEBRA: fix zebra miss issue."
+   git commit -m "[mapauto6-84878] QC: add qc db for data_check_div."
+   git commit -m "[mapauto6-84878] SMOOTH: add boudary smooth for cutted lbr."
+   git commit -m "[mapauto6-84878] SMOOTH: fix up-down inner lbr smooth issue."
+   git commit -m "[mapauto6-84878] SMOOTH: fix boudary smooth too much issue."
+   git commit -m "[mapauto6-84878] QC: fix some issue."
+
+.. _w1-0703-to-0707:
+
+W1. 0703 to 0707
+~~~~~~~~~~~~~~~~
+
+1. | (1) 调查解决创建基板时产出的 renderdb 文件 FID 没有刷新的问题；
+   | (2) 优化 FID 刷新流程并调整调用策略，实现前置、后置两种调用模式；
+
+2. | (1) 配合 MD5 差异分析；
+   | (2) 验证 FID 刷新代码，整理目前的 FID 刷新模式；
+
+3. 配合进行非聚合上海全域 S1/S2 MD5 差异对比，对 LaneLayer
+   差异进行分析定位；
+
+4. | (1) 测试数据 MD5 非聚合统计；
+   | (2) 调查桥墩位置发生变化引起的差分异常问题：修改后 demo
+     数据前驱后继关系缺失引起；
+
+5. | (1) 调查 Render3DLayer 变化 Tile 595 中未被高精数据 UID diff
+     差分识别出来的情况 283；
+   | (2) 完善 HD 差分编译流程方案；
+
+.. _w2-0710-to-0714:
+
+W2. 0710 to 0714
+~~~~~~~~~~~~~~~~
+
+1. 完善 HD 差分编译流程：确保最少编译参数调整，主动在 BOS 上维护 BD_UID
+   基板数据文件，单次编译时存取当前城市中的最新 UID 基板数据库；
+
+2. 依据差分编译流程调整 FID 刷新代码，实现在 BOS 上维护 BD_UID
+   基版数据，开发进度 50%；
+
+3. | (1) 完成在 BOS 上维护 BD_UID 基版数据的 UIDManger 类的开发；
+   | (2) 修复北京 SD 质检项 C2
+     斑马线超出检测时的异常中断问题：双向路前驱后继串联问题；
+
+4. | (1) 完成差分编译流程的代码调整，验证 BOS 数据符合预期；
+   | (2) 对应修正 HD 差分编译方案；
+
+5. | (1) 验证修复 HD 差分编译 uid 为空时部分 fid 刷新失败的问题；
+   | (2) 验证修复 SD 部分 A1 质检项误报问题；
+
+.. _w3-0717-to-0721:
+
+W3. 0717 to 0721
+~~~~~~~~~~~~~~~~
+
+1. | (1) SD 质检项 A1 道路面过宽增加车道数判定；
+   | (2) 调查刷新 FID 引起的建筑纹理异常问题；
+
+2. | (1) 优化 BD_UID 表格的创建逻辑及 FID 刷新过程；
+   | (2) 创建并调整模型属性信息表 BD_OBJ_PRTY_PLUS 的刷新逻辑；
+
+3. 调查 SD 斑马线缺失问题：使用 origin 切线时部分切线方向计算失败引起；
+
+4. 修复斑马线缺失问题：修复路口切线外法线方向的确定规则；
+
+.. _wn-note:
+
+Wn. Note
+~~~~~~~~
+
+1. 【7.26】补充质检项 QualityCheckDB 单例类创建 data_check_div
+   表并加入机检数据库；
+
+2. 【7.27】添加 proc_boundary_smooth 函数对车道数变化时的 lbr
+   边线做平滑；
+
+3. 【7.31】修正边线串线平滑时部分道路平滑过度的问题，道格拉斯抽稀两次引起；
+
+.. _2日常积累:
+
+2、日常积累
+-----------
+
+.. _21-sqlite-时间管理:
+
+2.1 SQLite 时间管理
+~~~~~~~~~~~~~~~~~~~
+
+#spatialite
+
+.. code:: sql
+
+   -- 创建数据表
+   CREATE TABLE IF NOT EXISTS UID (
+   	Id         INTEGER PRIMARY KEY AUTOINCREMENT, 
+   	UidName    TEXT,
+   	CreateTime DATE
+   );
+
+   -- 插入当前时间的数据
+   INSERT INTO UID(UidName, CreateTime) VALUES(
+   	'demo', 
+   	strftime('%Y-%m-%d %H:%M:%S','now','localtime')
+   );
+
+.. _22-c-复制文件:
+
+2.2 C++ 复制文件
+~~~~~~~~~~~~~~~~
+
+#cplusplus
+
+.. code:: cpp
+
+   #include <iostream>
+   #include <fstream>
+
+   int main() {
+       std::ifstream source("source.cpp", std::ios::binary);
+       std::ofstream destination("destination.cpp", std::ios::binary);
+
+       destination << source.rdbuf();
+
+       source.close();
+       destination.close();
+
+       return 0;
+   }
+
+.. _23-macdockervscode:
+
+2.3 Mac+Docker+VSCode
+~~~~~~~~~~~~~~~~~~~~~
+
+（1）安装 Docker 并启动容器
+
+.. code:: bash
+
+   #step.1 安装 Docker Desktop
+   wget https://desktop.docker.com/mac/main/arm64/Docker.dmg
+
+   #step.2 拉齐镜像并启动容器
+   docker pull ubuntu
+   docker run -it ubuntu /bin/bash
+
+   #step.3 安装 C++ 开发环境
+   cp sources.list /etc/apt/sources.list # 镜像源
+   apt update && apt install -y cmake g++ gdb
+
+   #step.4 为 vscode 安装插件
+   Docker
+   Dev Containers
+
+.. code:: bash
+
+   # x86/64 镜像源 source.list
+
+   deb http://mirrors.tuna.tsinghua.edu.cn/ubuntu/ jammy main restricted universe multiverse
+   # deb-src http://mirrors.tuna.tsinghua.edu.cn/ubuntu/ jammy main restricted universe multiverse
+   deb http://mirrors.tuna.tsinghua.edu.cn/ubuntu/ jammy-updates main restricted universe multiverse
+   # deb-src http://mirrors.tuna.tsinghua.edu.cn/ubuntu/ jammy-updates main restricted universe multiverse
+   deb http://mirrors.tuna.tsinghua.edu.cn/ubuntu/ jammy-backports main restricted universe multiverse
+   # deb-src http://mirrors.tuna.tsinghua.edu.cn/ubuntu/ jammy-backports main restricted universe multiverse
+   deb http://mirrors.tuna.tsinghua.edu.cn/ubuntu/ jammy-security main restricted universe multiverse
+   # deb-src http://mirrors.tuna.tsinghua.edu.cn/ubuntu/ jammy-security main restricted universe multiverse
+
+.. code:: bash
+
+   # arch64 镜像源 source.list
+
+   deb http://mirrors.tuna.tsinghua.edu.cn/ubuntu-ports/ jammy main restricted universe multiverse
+   # deb-src http://mirrors.tuna.tsinghua.edu.cn/ubuntu-ports/ jammy main restricted universe multiverse
+   deb http://mirrors.tuna.tsinghua.edu.cn/ubuntu-ports/ jammy-updates main restricted universe multiverse
+   # deb-src http://mirrors.tuna.tsinghua.edu.cn/ubuntu-ports/ jammy-updates main restricted universe multiverse
+   deb http://mirrors.tuna.tsinghua.edu.cn/ubuntu-ports/ jammy-backports main restricted universe multiverse
+   # deb-src http://mirrors.tuna.tsinghua.edu.cn/ubuntu-ports/ jammy-backports main restricted universe multiverse
+   deb http://mirrors.tuna.tsinghua.edu.cn/ubuntu-ports/ jammy-security main restricted universe multiverse
+   # deb-src http://mirrors.tuna.tsinghua.edu.cn/ubuntu-ports/ jammy-security main restricted universe multiverse
+
+（2） 配置终端
+
+.. code:: bash
+
+   #step.1 安装 z shell
+   cat /etc/shells
+   apt-get install zsh
+
+   #step.2 安装 Oh My Zsh
+   sh -c "$(wget -O- http://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
+
+   #step.3 修改主题 robbyrussell 为 ys
+   vim ~/.zshrc
+   #ZSH_THEME="ys"
+   source ~/.zshrc
+
+   #step.4 安装插件
+   # 1) zsh-autosuggestions 插件可以帮助我们在输入命令时，根据历史的输入记录给出建议
+   git clone https://github.com/zsh-users/zsh-autosuggestions $ZSH_CUSTOM/plugins/zsh-autosuggestions
+   # 2) zsh-syntax-highlighting 插件可以对输入的命令行添加高亮，并进行语法检查
+   git clone https://github.com/zsh-users/zsh-syntax-highlighting.git ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting
+   # 3) zsh-history-substring-search 插件可以实现对历史命令的子串搜索
+   git clone https://github.com/zsh-users/zsh-history-substring-search ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-history-substring-search
+   # 4) 更新配置
+   vim ~/.zshrc
+   #plugins=(... zsh-autosuggestions zsh-syntax-highlighting zsh-history-substring-search)
+   source ~/.zshrc
+
+（3）常用软件
+
+#mac软件
+
+.. code:: bash
+
+   [Yoink]      # 文件拖拽到左侧收纳窗进行拷贝
+   [DataGraph]  # 数据可视化软件, 类似于 Origin
+   [scidavis]   # 免费数据可视化软件
+   [Obsidian]   # Markdown 笔记管理 
+   [Mos]        # 让 Mac 链接别的鼠标时更顺畅
+   [MacDroid]   # 链接手机管理数据
+   [TinyCal]    # 点击图标显示具体日历
+   [Cursor]     # 用 ChatGPT 辅助代码
+
+参考资料
+~~~~~~~~
+
+1. `# 十分钟在 macOS 快速搭建 Linux C/C++
+   开发环境 <https://blog.csdn.net/wu_weijie/article/details/130142115>`__\ [EB/OL].
+
+2. `# Docker
+   容器使用 <https://www.runoob.com/docker/docker-container-usage.html>`__\ [EB/OL].
+
+3. `#
+   解决brew慢的问题 <https://zhuanlan.zhihu.com/p/324691527>`__\ [EB/OL].

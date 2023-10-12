@@ -1,0 +1,297 @@
+Question List in June, 2023
+===========================
+
+.. _1工作记录:
+
+1、工作记录
+-----------
+
+.. _w1-0605-to-0609:
+
+W1. 0605 to 0609
+~~~~~~~~~~~~~~~~
+
+1. | (1) 质检项输出时添加检测阈值信息；
+   | (2) 进行 C1 斑马线重叠代码的开发：完成思路梳理，代码开发进度 80%；
+
+2. | (1) 完成 C1 斑马线重叠代码开发并进行苏州测试：检出 88 处，随机抽样
+     30 人工核验均有渲染问题，正确率
+     100%；检出问题中上下行斑马线合并问题 7 处，其余与路口面相关；
+   | (2) 进行 A1
+     道路面超出范围代码开发：完成思路梳理，多段线间按距离百分比求间距开发完成，代码整体开发进度
+     50%；
+
+3. | (1) 完善 A
+     类道路面质检项检测方案：对道路面过长、过宽、缺失进行检测；
+   | (2) 修改 A1
+     多段线间距计算方式，由百分比间距调整为垂直投影间距，进度 60%；
+
+4. | (1) 质检项输出时添加百公里错误数统计；
+   | (2) 完善质检项 A1 道路面超出范围代码并针对苏州 0531
+     版本数据进行测试：
+   |  a. 优化垂直投影间距计算，考虑特殊 LINK 折线间的相互投影；
+   |  b. 根据全域测试结果修正道路面宽度检测阈值：30m→36m；
+   |  c. 测试苏州 0531 版本数据，检出 7，抽样 7，正确率 100%；
+   |  d. 测试苏州 0607 版本数据，检出 1 个道路面超出范围错误；
+   | (3) 完成 A3/A4 道路面边线异常以及道路过长质检项代码开发；
+
+5. | (1) 撰写 SD 质检项检测报告；
+   | (2) 修复由上下行斑马线合并失败引起的斑马线重叠问题：
+   |  a.
+     计算两多边形最短距离时添加点是否在多边形内的判断，二者有重叠区域时返回
+     0；
+   |  b. 裁剪测试范围内 5 条数据，4 条已修复，余 1 条为非上下行 LINK
+     生成两条重叠切线；
+   |  c. 苏州 C1 斑马线重叠质检项：81→21；
+
+.. _w2-0612-to-0616:
+
+W2. 0612 to 0616
+~~~~~~~~~~~~~~~~
+
+1. | (1) 质检项添加按问题等级进行分类输出的能力；
+   | (2) 补充 B5 路口面周长过长质检项代码；
+   | (3) 补充 C2 斑马线超出道路范围质检项代码，进度 50%；
+
+2. | 完成 C2 斑马线超出道路范围质检项代码开发：
+   | a. 针对上下行合并斑马线的情况进行补充检测；
+   | b. 补充路口面检测避免近邻路口斑马线超出误报；
+   | c. 修正包含多道路面前驱后继条件下斑马线外廓的布尔运算规则；
+
+3. | (1) 修复 A1 由于道路长度过短引起的质检误报；
+   | (2) 配合路口调整，优化切线与道路面不垂直引起的斑马线问题；
+   | (3) 针对部分不应生成斑马线的上下行路口进行斑马线、停止线生成过滤；
+
+4. | 检查并修复 C2 斑马线超出范围质检项误报，进行准确率测试；
+   | (1) 上调超出面积检测阈值：5→10；
+   | (2) 根据 SD Cross 的 node_id 获取关联路口：node_id 中存储 link_id；
+
+5. | (1) 根据苏州 0615 走查报告对质检项进行修正和调整；
+   | (2) 简单分析平滑性不足问题，裁剪 LINK 做抽稀平滑测试，待进行小范围
+     demo 验证；
+
+.. _w3-0619-to-0621:
+
+W3. 0619 to 0621
+~~~~~~~~~~~~~~~~
+
+1. | (1) 根据 LINK 长短自适应调整 density 参数大小，调整抽稀因子 eps
+     大小；
+   | (2) 之前的 LINK 平滑和边线平滑都失效了，需要看下怎么回事；
+
+2. | (1) B
+     样条平滑之后增加凸角检测和三角形重心调整，尽可能将相邻边夹角调整到适宜范围；
+   | (2) 测试：抽稀之后加 0.1 凸角、B 样条平滑后加 1e-4
+     凸角，仅弯折位置拉开，但折角还在；
+   | (3) 考虑优化道路边线的缓冲区生成规则；
+
+3. | (1) 进行 LINK 间抽稀平滑处理代码开发（60%）：link,
+     suc-link→合并→平滑→重新分配；
+   | (2) 道路边线：尝试直接拿道路边线几何做 CR（Catmull-Rom）样条拟合；
+
+.. _w4-0625-to-0630:
+
+W4. 0625 to 0630
+~~~~~~~~~~~~~~~~
+
+1. | (1) 完成 LINK 间两两合并后抽稀平滑代码的开发；
+   | (2) 测试边线 CR 样条和 B 样条抽样平滑效果，B 样条更平滑些；
+
+2. | (1) 定投 0626 SD 数据并统计数据量差异；
+   | (2) 梳理 UID 第二阶段用 UID 关联更新 FeatureID 流程，完成类设计；
+
+3. | 完成 UID 关联更新 FeatureID 代码，进行测试：
+   | 原表 A： 68323 （创建模式，UID=A=68323）
+   | 修改表 B：68286
+   | (1) B ∩ UID = 68159 B.FeatureID 变更个数=746, update
+     B.BD_RenderDB=746；
+   | (2) B - (UID∩B)=127 UID 表新增个数=127, insert BD_UID=127;
+
+4. | (1) 将体要素 component 的 BD_RenderDB_Advance 表列入 FeatureID
+     更新；
+   | (2) FID 更新流程优化：上一版 UID → 基板 BD_UID → 以 BD_UID 中的 ID
+     刷新 FID；
+
+5. | (1) 修复为 ATTACH 表建立索引时的异常；SD 质检项文件添加 region code
+     避免重复；
+   | (2) 刷新 RenderDB 中 UID 为空时的 FeatureID 避免编译重复；
+
+6. 拆分 UID 基表，调整 UID 对比刷新 FeatureID 流程，优化生成策略。
+
+月度备忘
+~~~~~~~~
+
+待办事项
+^^^^^^^^
+
+-  ☒ 质检项报出的 badcase 整理；
+
+-  ☒ 道路面：道路面过长（>20km）、道路面过宽问题报出；
+
+-  ☒ 斑马线超出范围问题修复；
+
+-  ☒ 能先加密就加密，暂时不考虑数据量的问题；
+
+-  ☐ LINK 间平滑影响范围仅在上下两条 LINK 将影响降到最小；
+
+-  ☐ A1 质检项过宽检测增加 10 条车道的过滤；
+
+-  ☐ 西直门桥位置坐标 116.348827, 39.939083；
+
+-  ☐ 优化 LINK 间衔接处平滑处理逻辑；
+
+提交记录
+^^^^^^^^
+
+.. code:: bash
+
+   git commit -m "[mapauto6-84878] QC: add A1/A3/A4/C1 items."
+   git commit -m "[mapauto6-84878] ZEBRA: fix zebra box md merge issue."
+   git commit -m "[mapauto6-84878] QC: finish ABC, add P0-P2, fix zebra filter."
+   git commit -m "[mapauto6-84878] QC: fix C2 misreported zebra overlapping."
+   git commit -m "[mapauto6-84878] SMOOTH: adjust link and lbr smooth method."
+   git commit -m "[mapauto6-84878] SMOOTH: turn off smooth temporarily."
+   git commit -m "[mapauto6-84878] QC: add region_code for qc file name."
+   git commit -m "[mapauto6-34049] UID: add FeatureIdKeeper class."
+   git commit -m "[mapauto6-34049] UID: adjust FeatureIdKeeper class."
+
+.. _2日常积累:
+
+2、日常积累
+-----------
+
+#algrithom
+
+.. _21-判断某个数落在哪个区间:
+
+2.1 判断某个数落在哪个区间
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. code:: cpp
+
+   #include <iostream>
+   #include <vector>
+
+   std::vector<int> query(std::vector<float>& nums, float target){
+       std::vector<int> result(2, -1);
+       int low = 0, high = nums.size() - 1;
+       // 边界条件
+       if(nums.size() < 2) { return result; }
+       if(target > nums.back()) { 
+           result[0] = high;
+           result[1] = -1;
+           return result;
+       }
+       // 寻找右边界
+       while(low < high){
+           int mid = low + (high - low) * 0.5;
+           if(nums.at(mid) < target){ low = mid + 1; }
+           else { high = mid; }
+       }
+       result[1] = high;
+       // 寻找左边界
+       high = nums.size();
+       while(low < high){
+           int mid = low + (high - low) * 0.5;
+           if(nums.at(mid) > target){ high = mid; }
+           else{ low = mid + 1; }
+       }
+       result[0] = low - 1;
+       return result;
+   }
+
+   int main() {
+       std::vector<float> nums = {0.9, 1.3, 2.4, 3.6, 4.3, 5.4, 6.2, 7.1};
+       std::vector<int> result = query(nums, 2.5);
+       std::cout << result[0] << "," << result[1] << std::endl;
+       return 0;
+   }
+
+.. _22-计算几何:
+
+2.2 计算几何
+~~~~~~~~~~~~
+
+#计算几何
+
+GC-06: 点是否在多边形内
+^^^^^^^^^^^^^^^^^^^^^^^
+
+   .. figure:: pic/202306/GC06.png
+      :align: center
+      :alt: 点是否在多边形内
+
+.. code:: cpp
+
+   template<class P>
+   bool is_point_in_polygon(P& point, std::vector<P>& polygon) {
+     //A point is in a polygon if a line from the point to infinity crosses the polygon an odd number of times
+     int i, j, nvert = points.size();
+     bool c = false;
+     // Starting with the edge from the last to the first node
+     for(i = 0, j = nvert - 1; i < nvert; j = i++) {
+       //If a line from the point into infinity crosses this edge
+       if( // One point needs to be above, one below our y coordinate
+           ( (polygon[i].y >= point.y ) != (polygon[j].y >= point.y) ) &&
+           // ...and the edge doesn't cross our Y corrdinate before our x coordinate (but between our x coordinate and infinity)
+           (point.x <= (polygon[j].x - polygon[i].x) * (point.y - polygon[i].y) / (polygon[j].y - polygon[i].y) + polygon[i].x)
+         )
+         c = !c;
+     }
+     return c;
+   }
+
+.. _23-布尔运算:
+
+2.3 布尔运算
+~~~~~~~~~~~~
+
+实现几何布尔运算的 DICC
+算法，求交集时对收集到的内侧边进行收集链接，求并集时对外侧边进行收集链接，求差集时只需要将其中一个多边形方向变为逆时针即可。主要包括四个步骤：
+
+-  Direction 加方向：由多边形面积计算公式判定多边形方向；
+
+-  Inter-Clip 剪边：线段求交，用交点集拆分线段；
+
+-  Collection
+   收集边：经过剪边操作后，线段上的某点在多边形内，则线段在多边形内；
+
+-  Connection
+   链接边：多边形内是连续的线段集，把收集到的边按顺时针方向首尾相连；
+
+.. _24-sqlite-给附加数据库建索引:
+
+2.4 SQLite 给附加数据库建索引
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+#spatialite 附加数据库索引用 ``create index [idx name] on test.link;``
+这种形式会报 SQL 语句异常 ``Error: near ".": syntax error``
+错误，正确格式：
+
+.. code:: sql
+
+   ATTACH DATABASE ':test:' AS TEST;
+   CREATE INDEX TEST.link_idx on link (...)
+
+参考文献
+~~~~~~~~
+
+1. Algorithms & Technologies. `# Point in Polygon in
+   C <https://www.algorithms-and-technologies.com/point_in_polygon/c>`__\ [EB/OL].
+
+2. stackoverflow. `# Point in Polygon
+   Algorithm <https://stackoverflow.com/questions/11716268/point-in-polygon-algorithm>`__\ [EB/OL].
+
+3. 哔哩哔哩. `# 多边形的布尔运算（上
+   提出问题） <https://www.bilibili.com/video/BV1JV411B7T1>`__\ [EB/OL].
+
+4. 哔哩哔哩. `# 多边形的布尔运算（下
+   解决方案） <https://www.bilibili.com/video/BV15y4y1J7K7>`__\ [EB/OL].
+
+5. Kai Hormann. `Efficient Clipping of Arbitrary
+   Polygons <https://dl.acm.org/doi/pdf/10.1145/274363.274364>`__\ [EB/OL].
+
+6. John C,Tipper. `Simple Robust Boolean Operations for Triangulated
+   Surfaces <https://arxiv.org/pdf/1308.4434.pdf>`__\ [EB/OL].
+
+.. |image1| image:: D:\Ashinjero\Jaxin's%20question%20list\2209-2307-Baidu\pic\202306\GC06.png

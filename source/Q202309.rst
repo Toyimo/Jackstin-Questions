@@ -1,0 +1,453 @@
+Question List in September, 2023
+================================
+
+.. _1日常积累:
+
+1、日常积累
+-----------
+
+.. _11-顶点压缩算法:
+
+1.1 顶点压缩算法
+~~~~~~~~~~~~~~~~
+
+依据超图 S3M 的设计，\*.s3mb 目前支持 draco、meshoptimizer
+两种顶点简化算法。在程序语言支持方面，draco 同时支持 C++ 和
+JavaScript，meshoptimizer 源码仅支持 C++。但通过将源码库编译为
+WebAssembly 可进行调用，超图在 S3M_SDK 的 S3M_JS/S3M_module/S3MParser
+路径下的meshopt_decoder.module.js 文件中进行了实现，其后缀名一般为
+\*.wasm。
+
+meshopt
+^^^^^^^
+
+压缩后二进制文件的解压缩。
+
+.. code:: cpp
+
+   void meshopt_decodeVertexBuffer(
+   	void* destination,    // 解码后的顶点缓冲区的目标地址
+   	size_t vertex_count,  // 顶点的数量
+   	size_t vertex_size,   // 每个顶点的大小（以字节为单位）
+   	const void* source,   // 经过压缩的顶点缓冲区的源地址
+   	size_t source_size    // 经过压缩的顶点缓冲区的大小（以字节为单位）
+   );
+
+.. _12-纹理压缩算法:
+
+1.2 纹理压缩算法
+~~~~~~~~~~~~~~~~
+
+**图片压缩与纹理压缩**\ 。图片压缩格式作为图片文件的存储格式，通常在磁盘、内存中进行传输时使用，常用的图片格式有
+JPG、PNG、GIF、BMP
+等。纹理格式是显卡能够直接采样的纹理数据格式，通常在向显卡加载纹理时使用，常用的压缩格式有
+DXT1/DXT5、ETC1、PVRTC 等。
+
+图片压缩格式基于整张图片进行压缩，解码过程中像素之间存在依赖关系；而纹理压缩主要基于块压缩思想，能够在显卡中更快读取像素所属字节块进行解压缩，以支持随机访问。在图形学过去几十年的发展中诞生了一系列纹理压缩技术：
+
+1. **S3TC**, S3 Texture Compression.
+
+2. **ETC1**, Ericsson Texture Compression.
+
+3. **PVRTC**, PowerVR Texture Compression.
+
+4. **ATITC**, ATI Texture Compression.
+
+S3TC
+^^^^
+
+S3TC 纹理压缩算法有时也被称为 DXTn，DXTC 或者 BCn，最初由 S3 Graphics
+公司的 *Lourcha* 等人开发，随后该算法被纳入 Microsoft 的 DirectX 6.0 和
+OpenGL 1.3；其存储格式一般为 \*.dds。目前 S3TC 算法有五种变体，命名为
+DXT1~DXT5，是一种典型的有损压缩算法。主体思想是将 4×4
+的像素块经由算法存储到 64-bit 或 128-bit 的空间中进行存储。
+
+以 DXT1 为例，其压缩后将 4×4 像素存储为 64-bit（即 8
+字节）；这种压缩算法适用于不透明或具有单一透明颜色的纹理，针对不透明和透明设计了两种颜色混合模式。
+
+1. 不透明纹理：存储 2 个 16-bit 的 RGB565 颜色值和 4×4 个 2-bit
+   的位图索引，共 64-bit 空间。位图索引中每个索引
+   2-bit，依据其二进制值在 4 种颜色中进行选择。这 4 中颜色由顶部的 2
+   个颜色值线性插值得到。
+
+   .. math::
+    
+    \begin{align}\mathrm{COLOR}_2 = \frac{2}{3}\mathrm{COLOR}_0 + \frac{1}{3}\mathrm{COLOR}_1\\\mathrm{COLOR}_3 = \frac{1}{3}\mathrm{COLOR}_0 + \frac{2}{3}\mathrm{COLOR}_1\end{align}
+
+   .. figure:: image/2309-dxt1.png
+      :align: center
+      :scale: 50
+
+1. 透明纹理：当 ``uint16_t`` 的 :math:`COLOR_0` 小于 ``uint16_t`` 的
+   :math:`COLOR_1` 时将选择此格式。 其由 2 种颜色确定极值，第 3
+   种为内插颜色，第 4 种颜色为 Transparent。
+
+    .. math:: 
+        \begin{align}\mathrm{COLOR}_2 &= \frac{1}{2}\mathrm{COLOR}_0 + \frac{1}{2}\mathrm{COLOR}_1\\\mathrm{COLOR}_3 &= Tranparent\end{align}
+
+ETC1
+^^^^
+
+ETC 是 2005 年初由 Ericsson 爱立信公司研究开发的一种纹理压缩技术。其将
+4×4 的像素块编码为 2×4 或 4×2
+像素的两个块，并为每个块指定一个基色，每个像素的颜色通过一个编码为相对于这些基色偏移的灰度值确定。具体来说，ETC1
+每 4×4 像素块编码为 64-bit 的字节数据，每一个像素块又分为两个 2×4
+子块，每个子块包含一个 3-bit
+的修饰表索引和一个基本颜色值，这两个颜色值要么是2 R4G4B4 要么是
+R5G5B5+R3G3B3。
+
+.. _13-mipmap:
+
+1.3 Mipmap
+~~~~~~~~~~
+
+**纹理过滤的问题**\ 。在三维渲染中遇到远处物体的渲染时，可能遇到 1
+个像素需要映射 20×20 的纹理像素的情况，这种情况下通常会使用 GL_NEAREST
+或 GL_LINEAR 等选择或计算 1
+个像素来实现纹理过滤。不过纹理过滤常常会产生锯齿、摩尔纹等失真现象，这是因为在于进行纹理过滤时，1
+个像素只采样了原本 20×20 纹理像素里 2×2
+的纹理像素的颜色进行线性插值来得到最终的颜色，其他的 396
+个纹理像素无用，从而导致取色不精确。
+
+**多级纹理**\ 。OpenGL使用一种叫做多级纹理，即 Mipmap
+的概念来解决这个问题，即创建一系列纹理图像，使后一个纹理图像是前一个尺寸的
+1/2。其理念是：距观察者的距离超过一定的阈值时，在多级渐远纹理中选择最适合物体的距离的那个。生成多级纹理时，采用的下采样滤波器通常是均值滤波器，当然也可以用高斯滤波器。
+
+.. _14-地理信息常识:
+
+1.4 地理信息常识
+~~~~~~~~~~~~~~~~
+
+1. EPSG-2326：香港 1980 平面投影坐标系
+
+2. EPSG-4326：WGS84 地理坐标系
+
+3. EPSG-4490：CGCS2000 地理坐标系
+
+4. EPSG-4479：CGCS2000 平面投影坐标系
+
+5. EPSG-3857：WGS84 墨卡托平面投影坐标系
+
+6. EPSG-4979：WGS84 三维地理坐标系
+
+7. EPSG-4978：WGS84 地心地固直角坐标系
+
+.. code:: javascript
+
+   //运行网站：https://sandcastle.cesium.com/
+   //Cesium 地心地固坐标系转经纬度坐标系
+   function toDegrees(X, Y, Z){
+     let cartesian = new Cesium.Cartesian3(X, Y, Z);
+     let cartographic =Cesium.Cartographic.fromCartesian(cartesian);
+     let long = Cesium.Math.toDegrees(cartographic.longitude);
+     let lat = Cesium.Math.toDegrees(cartographic.latitude); 
+     let height = cartographic.height;	
+     return [long, lat, height];
+   }
+   //Cesium 经纬度坐标系转地心地固坐标系
+   function toXYZ(long, lat, height){
+     let xyz = Cesium.Cartesian3.fromDegrees(long, lat, height);
+     return [xyz.x, xyz.y, xyz.z];
+   }
+   // 使用示例
+   let xyz = toXYZ(114.1781768, 22.2505087, 0);
+   console.log(xyz);
+   console.log(toDegrees(...xyz));
+
+参考资料
+~~~~~~~~
+
+1. 维基百科. `S3 Texture
+   Compression <https://en.wikipedia.org/wiki/S3_Texture_Compression>`__\ [EB/OL].
+
+2. 知乎. `#
+   纹理压缩原理之S3TC <https://zhuanlan.zhihu.com/p/125751581>`__\ [EB/OL].
+
+3. 知乎. `#
+   纹理压缩 <https://zhuanlan.zhihu.com/p/553445757>`__\ [EB/OL].
+
+4. 知乎. `# 计算机图形学七：纹理映射(Texture
+   Mapping)及Mipmap技术 <https://zhuanlan.zhihu.com/p/144332091>`__\ [EB/OL].
+
+5. Microsoft. `# 不透明和 1 位 Alpha 纹理 (Direct3D
+   9) <https://learn.microsoft.com/zh-cn/windows/win32/direct3d9/opaque-and-1-bit-alpha-textures>`__\ [EB/OL].
+
+.. _2程序与算法:
+
+2、程序与算法
+-------------
+
+#cplusplus
+
+.. _21-编译器不识别-stdnumericlimitsuint32tmax:
+
+2.1 编译器不识别 ``std::numeric_limits<uint32_t>::max()``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+这是由于 Microsoft 在 ``<windows.h>`` 定义了 max
+宏：\ ``#define max(a,b) (((a) > (b)) ? (a) : (b))``\ ；boost
+解决了这个问题，但是很难复制它的方法，简单的做法如下：
+
+.. code:: cpp
+
+   std::numeric_limits<uint32_t>::max();
+   # modify to
+   (std::numeric_limits<uint32_t>::max)();
+
+此外，在Windows项目中，如果使用 ``std::min`` 或
+``std::max``\ ，有可能在编译的时候提示以下内容：
+
+.. code:: bash
+
+   error C2589 : “(” : “::”右边的非法标记
+   error C2144 : 语法错误:“unknown - type”的前面应有“)”
+   error C2144 : 语法错误:“unknown - type”的前面应有“; ”
+   error C2062 : 意外的类型“int”
+   error C2059 : 语法错误:“)”
+   error C2059 : 语法错误:“)”
+
+其原因在于 Visual C++ 和c++模板库上的名字 ``min`` 和 ``max`` 与
+``<windows.h>`` 中传统的 min/max 宏定义有冲突。为了解决这个问题，Visual
+C++ 定义了另外两个功能相同的模板：\ ``_cpp_min()`` 和
+``_cpp_max()``\ ；可以用它们来代替 ``std::min()`` 和
+``std::max()``\ 。为了禁用 Visual C++ 中的 min/max宏定义，可以在包含
+``<windows.h>`` 头文件之前加上 NOMINMAX，或将其加入预定义处理器中。
+
+.. code:: cpp
+
+   #define NOMINMAX
+   // 也可以在头文件中加入
+   #undef min
+   #undef max
+
+.. _22-能访问-github-网页但-git-clone-不下来:
+
+2.2 能访问 GitHub 网页但 ``git clone`` 不下来
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+与代理有关的问题，设置了代理之后需要找到 网络→代理→代理端口，然后对 git
+进行全局的 http.proxy 代理设置，让 git 走代理端口访问网页资源。
+
+.. code:: bash
+
+   # 设置本地代理端口
+   git config --global http.proxy 127.0.0.1:<端口号>
+   # 取消设置
+   git config --global --unset http.proxy
+   # 查看是否设置了端口
+   git config --list
+
+这样就能解决 git clone 经常报 403 的问题了。
+
+.. _参考资料-2:
+
+参考资料
+~~~~~~~~
+
+1.  CSDN 博客. `VCPKG
+    安装指定版本库 <https://blog.csdn.net/lhkjm/article/details/127596110>`__\ [EB/OL].
+
+2.  .Zeux. `meshoptimizer <https://meshoptimizer.org/>`__\ [EB/OL].
+
+3.  Google.\ `draco <https://google.github.io/draco/>`__ [EB/OL].
+
+4.  CSDN 博客. `#
+    使用OpenMP并行化常见算法 <https://blog.csdn.net/qq_41858347/article/details/104255734>`__\ [EB/OL].
+
+5.  CSDN 博客. `#
+    OpenMP简介和使用 <https://blog.csdn.net/qq_39589936/article/details/109089908>`__\ [EB/OL].
+
+6.  CSDN 博客. `#
+    OpenMP用法大全 <https://blog.csdn.net/ArrowYL/article/details/81094837>`__\ [EB/OL].
+
+7.  CSDN 博客. `# OpenMP:
+    OpenMP编程指南 <https://blog.csdn.net/augusdi/article/details/8807114>`__\ [EB/OL].
+
+8.  知乎. `#
+    什么是死锁 <https://zhuanlan.zhihu.com/p/361475700>`__\ [EB/OL].
+
+9.  OpenMP. `OpenMP
+    Specification <https://www.openmp.org/specifications/>`__\ [EB/OL].
+
+10. NVIDA. `# Parallel Depth-First Search for Directed Acyclic
+    Graphs <https://research.nvidia.com/publication/2017-03_parallel-depth-first-search-directed-acyclic-graphs>`__\ [EB/OL].
+
+11. Github. # `Parallel DFS for Directed Acyclic
+    Graphs <https://github.com/morpheusthewhite/parallel-dfs-dag#parallel-dfs-for-directed-acyclic-graphs>`__\ [EB/OL].
+
+12. Mohesn G, et al. `Nearly Work-Efficient Parallel DFS in Undirected
+    Graphs <https://arxiv.org/pdf/2304.09774.pdf>`__\ [J].
+
+13. 简书. `#
+    稀疏矩阵定义以及存储格式(COO,CSR,CSC) <https://www.jianshu.com/p/bad1a755dee7>`__\ [EB/OL].
+
+.. _3图形学积累:
+
+3、图形学积累
+-------------
+
+.. _31-lod-selection:
+
+3.1 LOD Selection
+~~~~~~~~~~~~~~~~~
+
+LOD，Level of
+Detail，也称为层次细节模型，是一种实时三维计算机图形技术，最先由Clark于1976年提出。其工作原理是：视点离物体近时，能观察到的模型细节丰富；视点远离模型时，观察到的细节逐渐模糊。系统绘图程序根据一定的判断条件，选择相应的细节进行显示，从而避免了因绘制那些意义相对不大的细节而造成的时间浪费，同时有效地协调了画面连续性与模型分辨率的关系。完整的
+LOD 算法包含 3 个部分：
+
+1. Generation
+
+2. Selection
+
+3. Switching
+
+常用的 LOD 模型选取方法有 **Range–Based, 基于距离的 LOD 选取**\ 和
+**Projected Area–Based, 基于投影面积的 LOD 选取**\ 两类。Range 定义了
+:math:`[0,r_1),[r_1,r_2),\cdots,[r_n,+\infty)`
+个区间，分别选取细节最丰富的 LOD0、次之 LOD1、···、LODn 模型；Projected
+Area 定义了投影面积，投影面积越大则选取细节越丰富的 LOD
+模型。由此得到三种 LOD Selection 方法：
+
+1. **观察距离**\ ：Distance，基于距离的 LOD 选取的实现，单位为米；
+
+   .. figure:: image/2309-lod-selection-range.png
+      :align: center
+      :scale: 50
+
+1. **屏幕像素**\ ：Screen Size，基于投影面积的 LOD 选取的实现，Esri 的
+   I3S 采用的判据，即节点最小包围球在渲染屏幕上的投影面积，单位为像素；
+
+   .. figure:: image/2309-lod-selection-projection.png
+      :align: center
+      :scale: 50
+
+1. **几何误差**\ ：Geometric Error，Cesium
+   采用的判据，其大小由模型本身的精细程度决定，即估计简化后的模型与原始模型最大偏离多少米，单位为米，可以换算为屏幕空间误差
+   SSE；
+
+   .. figure:: image/2309-lod-selection-ge.png
+      :align: center
+
+.. _32-cesium-model-matrix:
+
+3.2 Cesium Model Matrix
+~~~~~~~~~~~~~~~~~~~~~~~
+
+Cesium 中的坐标系主要有 3 种：地心地固坐标系
+X–Y–Z（也称为世界坐标系），坐标原点位于地球球心，单位为米；地理坐标系
+Longitude–Latitude–Height，坐标原点位于格林尼治天文台，单位为弧度；以及局部坐标系
+East–North–Up，是一个垂直于当前地表位置的垂直坐标系：X
+轴指向当前点的东方向，Y 轴指向当前点的北方向，Z
+轴指向坐标原点的地表法线方向，单位为米。
+
+给定 S3M 解析出的顶点坐标 :math:`\mathbf{v}`
+则可以计算出其在世界坐标系下的坐标 :math:`\mathbf{V}` 如下：
+
+    .. math::
+        \mathbf{V}=\mathbf{M}_{\textup{model}}\cdot\mathbf{v}
+
+注意到在 S3M_SDK 开发包中有考虑到 layer.modelMatrix \* geode.geoMatrix
+的矩阵乘法作为着色器中的 :math:`\mathbf{M}_{model}`\ ；故给定从 S3MB
+中解析出几何偏移矩阵 :math:`\mathbf{M}_g` 则可算出模型矩阵如下：
+
+    .. math::
+        \mathbf{M}_{\textup{model}}=\mathbf{M}_f\cdot \mathbf{M}_g
+
+其中，\ :math:`\mathbf{M}_f` 可由 Cesium 的
+``Ceseium.Transforms.eastNorthUpToFixedFrame(scp.position)``
+得到。该方法通过传入中心点获取该位置垂直于当前地表的垂直坐标系并将其换算到地心地固坐标系下，该方法定义的坐标为：X
+轴指向当前点的东方向，Y 轴指向当前点的北方向，Z
+轴指向坐标原点的地表法线方向。具体来说，\ :math:`\mathbf{M}_f`
+的计算包括下面 3 步：
+
+模型矩阵的计算
+^^^^^^^^^^^^^^
+
+1. 计算在坐标原点 :math:`\mathbf{p_0}=(x_0\ \ y_0\ \ z_0\ \ 1)^T`
+   处的椭球面外法向 :math:`\mathbf{v}_u` 以及原点东方向
+   :math:`\mathbf{v}_{e}` ：
+
+    .. math::
+        \mathbf{up}=\left(\frac{x_0}{a^2}\ \ \frac{y_0}{b^2}\ \ \frac{z_0}{c^2}\right)^T,\mathbf{e}_{up}=\frac{\mathbf{up}}{\|\mathbf{up}\|},\mathbf{v}_n=(\mathbf{e}_{up}\ \ 1)^T
+    .. math:: 
+        \mathbf{east}=(-y_0\ \ x_0\ \ 0),\mathbf{e}_{east}=\frac{\mathbf{east}}{\|\mathbf{east}\|},\mathbf{v}_e=(\mathbf{e}_{east}\ \ 1)^T
+
+1. 计算原点的北方向 :math:`\mathbf{v}_n`\ ：
+
+    .. math:: 
+        \mathbf{v}_n=\mathbf{v}_u\times\mathbf{v}_e
+
+1. 由以上参数组成坐标转换矩阵如下：
+
+    .. math::
+        \mathbf{M}_f=\left(\mathbf{v}_e\ \ \mathbf{v}_n\ \ \mathbf{v}_u\ \ \mathbf{p}_0\right)
+
+由此即可将局部坐标转换到世界坐标系下，注意这个坐标可以直接在着色器中使用作为
+MVP 矩阵中的 Model Matrix 参与着色渲染。
+
+椭球的外法线方向
+^^^^^^^^^^^^^^^^
+
+取 :math:`a,b,c` 为椭球面在 :math:`X,Y,Z`
+三个方向上的半轴长度，则椭球面的方程可以表示为：
+
+    .. math::
+        F(x,y,z)=\frac{x}{a^2}+\frac{y}{b^2}+\frac{z}{c^2}-1=0
+
+对应 WGS 1984
+椭球参数分别为：\ :math:`a=b=6378137.0,c=6356752.3142451793`\ ；由上面的椭球面的隐函数可以计算其在球面上任一一点的法向量为：
+
+    .. math::
+        \mathbf{n}=\left(\frac{\partial F}{\partial x},\frac{\partial F}{\partial y}\frac{\partial F}{\partial z}\right)=\left(\frac{2x}{a},\frac{2y}{b},\frac{2z}{c}\right)
+
+.. _33-图形学框架:
+
+3.3 图形学框架
+~~~~~~~~~~~~~~
+
+第一代图形渲染框架主要有微软 DirectX 技术体系内的 Direct3D 系列，开源的
+OpenGL 系列及其衍生的 OpenGL ES 和 WebGL 框架等；随着 GPU
+硬件性能的提高，于 2014 至 2016 年先后诞生了能够更好的利用 GPU
+特性进行三维渲染的现代三大图形渲染框架： Metal、D3D12 以及
+Vulkan；以及由 W3C 社区主导的现代 Web 端图形渲染框架：WebGPU。
+
+   .. figure:: image/2309-GL.png
+      :align: center
+
+.. _参考资料-3:
+
+参考资料
+~~~~~~~~
+
+1.  CSDN 博客. `#
+    渲染性能优化之几种LOD层次细节总结 <https://blog.csdn.net/chenweiyu11962/article/details/117006190>`__\ [EB/OL].
+
+2.  Thomas Akenine-Moller, Eric Haines, et al. `Real–time Rendering,
+    4th <https://www.realtimerendering.com/>`__ [M].
+
+3.  知乎. `# 19.9
+    细节层次(LOD) <https://zhuanlan.zhihu.com/p/403881113?utm_id=0>`__\ [EB/OL].
+
+4.  CSDN 博客. `# 3DTile
+    的geometricError含义 <https://zhuanlan.zhihu.com/p/403881113?utm_id=0>`__\ [EB/OL].
+
+5.  CSDN 博客. `# cesium osgearth
+    屏幕空间误差理解 <https://blog.csdn.net/weixin_40133182/article/details/129749483>`__\ [EB/OL].
+
+6.  CSDN 博客. `# UE4 LOD Screen
+    Size <https://blog.csdn.net/mrbaolong/article/details/124935035>`__\ [EB/OL].
+
+7.  知乎. `#
+    实时渲染第四版-目录 <https://zhuanlan.zhihu.com/p/406606440>`__\ [EB/OL].
+
+8.  知乎. `#
+    在“绝世武功的目录”RTR4中译版出版前，先奉上“绝世武功秘籍的本体” <https://zhuanlan.zhihu.com/p/418196347#%E5%85%B3%E4%BA%8Ertr4%E4%B8%AD%E8%AF%91%E7%89%88%E7%9A%84%E5%87%BA%E7%89%88%E6%97%B6%E9%97%B4%E7%9A%84update>`__\ [EB/OL].
+
+9.  博客园.
+    `Cesium之球心坐标与本地坐标 <https://www.cnblogs.com/fuckgiser/p/6688531.html>`__
+
+10. 知乎. `#
+    EIGEN库常用的操作 <https://zhuanlan.zhihu.com/p/559514293>`__\ [EB/OL].
+
+11. CSDN 博客. `#
+    椭球曲面计算 <https://blog.csdn.net/m0_37870385/article/details/109818449>`__\ [EB/OL].

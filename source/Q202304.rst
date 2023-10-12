@@ -1,0 +1,788 @@
+Question List in April, 2023
+============================
+
+.. _1工作记录:
+
+1、工作记录
+-----------
+
+.. _w1-0403-to-0407:
+
+W1. 0403 to 0407
+~~~~~~~~~~~~~~~~
+
+1. | (1) 修复合并代码后的上下行异常：上下行高程对齐串接时过滤 mp_id = -1
+     时的情况；
+   | (2)
+     排查上下行投影失败的问题：上下行始终点相同，对此类情况忽略高程对齐处理；
+   | (3) 确定 SD 新要素停止线和斑马线的 FeatureClass 和
+     FeatureSubClass，初步制定停止线的生成规则为：以路口切线方向为基准向
+     LINK 方向作平移，开始进行代码开发；
+
+2. | (1)
+     停止线生成添加规则：双向路过滤，上下行和单向路仅在进入路口时生成停止线；
+   | (2)
+     停止线区分复杂路口并对其向后平移一定距离，为斑马线包围盒腾出空间；
+   | (3) 针对复杂路口，创建斑马线包围盒；
+
+3. | (1) 完成 SD 停止线的 render 数据生成代码，验证三角网无明显异常；
+   | (2) 完成 SD 斑马线函数的代码迁移和改造，验证三角网无明显异常；
+
+4. | (1) SD 停止线和斑马线联调，工具链排期到周一；
+   | (2) 分析 demo 数据停止线 badcase，设计近邻路口处理方案；
+
+.. _w2-0410-to-0414:
+
+W2. 0410 to 0414
+~~~~~~~~~~~~~~~~
+
+1. | (1) 识别 link type = 8 的道路为小区内部道路，不生成停止线和斑马线；
+   | (2) 用 R
+     树检测近邻路口，相同等级的路口以路口面积大为基准生成停止线斑马线；
+
+2. | 停止线、斑马线问题修复：
+   | (1) 将 13 级停止线、斑马线转为 15 级；
+   | (2)
+     修复停止线、斑马线相对高程偏低的问题：忘了加整体高程偏移，偏移量由
+     0.1 调整为 0.6；
+   | (2) 调查修复上海全域中断问题：停止线代码合入异常，待核实 0411
+     daily；
+   | Viewer 显示联调：
+   | (1) 联调 sd 15 级 viewer 无法显示的问题：viewer 链接参数变更；
+   | (2) 联调 sd 15 级 demo
+     数据停止线、斑马线显示：样式配置以及显示预计中午前完成；
+
+3. | (1) 复杂路口停止线沿路口向后偏移距离调整： 0.5m → 2.0m；
+   | (2)
+     斑马线和停止线生成过滤：高速、城市快速路、辅路、左转右转专用道、分合流等；
+   | (3) 停止线沿行进方向右侧向内收 0.1m 避免压盖上下行车道线；
+   | (4)
+     停止线与斑马线过近问题排查：路口定义扩充后，未对非复杂路口的斑马线进行过滤；
+
+4. | (1)
+     停止线生成过滤：仅生成复杂路口的停止线，与斑马线生成过滤规则保持一致；
+   | (2)
+     过长停止线以及斑马线截断：按照道路面宽度生成，修正新要素外廓的生成规则；
+   | (3) 排查苏州全域停止线和斑马线不显示的问题：猜测城市重叠区域 tile
+     显示问题，验证中；
+
+5. | (1) 数据核查：核查新的 daily 数据中，苏州全域停止线和斑马线已显示；
+   | (2) 斑马线对齐：SD
+     上下行切线不在一条线上时，对齐到最外侧切线上，进度 50%；
+
+W3 0417 to 0421
+~~~~~~~~~~~~~~~
+
+1. | (1)
+     排查四城市停止线生成中断问题：本地运行时未复现，裁小范围数据测试中；
+   | (2) 斑马线对齐：完成 SD
+     路口切线分组，正在进行切线偏移代码开发，进度 80%；
+
+2. | (1) 停止线生成异常问题排查：初始化构建 R 树异常；
+   | a. 依据路口构建 R 树时出现异常，添加包围盒计算限制，成功 4/5；
+   |  b. 将 R 树存储数据由指针修改为 cross id，检查运行稳定性；
+   | (2) 斑马线对齐：完成代码开发，核实 demo 数据范围内无明显异常；
+
+3. | (1) 切线对齐异常问题：修正切线夹角阈值，降低切线对齐的灵敏度；
+   | (2) 上海中断问题排查修复：
+   |  a. 修改构建路口关系的 R 树库为 boost::geometry::index::rtree；
+   |  b. 构建 R 树时边界条件增加 nan 值过滤；
+
+4. | (1) 切线对齐异常问题：添加切线中点水平距离小于 20m
+     限制，避免复杂路口切线匹配异常；
+   | (2)
+     切线的法向：修正复杂路口形状为凹多边形时，切线的外法线向量的生成规则；
+   | (3) 斑马线生成而停止线未生成异常：斑马线的近邻路口 rtree
+     过滤代码未更新，现已修复；
+
+5. | (1) 完成切线外法线向量生成规则的优化；
+   | (2)
+     过长停止线以及斑马线按照道路面宽度截断时，保留经纬度长度以减小误差；
+
+W4 0423 to 0428
+~~~~~~~~~~~~~~~
+
+1. | 斑马线/停止线生成参数调整：
+   | (1) 停止线沿行进方向右侧向外扩 0.3m 以卡齐车道线；
+   | (2) 根据车端效果，修正斑马线的内部长度： 3m → 5m；
+   | 斑马线生成规则优化，开发进度 50%：
+   | (1) 对上下行斑马线的外廓进行合并，避免斑马线中间发生中断；
+   | (2) 路口衔接道路面宽度过窄时忽略斑马线的生成；
+
+2. | 上下行斑马线生成规则优化，开发进度 80%：
+   | (1)
+     实现路口切线分组代码的开发，依据切线法向方向和切线距离进行分组；
+   | (2)
+     实现斑马线外廓形状合并的代码：平行时沿线扩展，非平行时取交点构面；
+   | 分析苏州 0423 斑马线、停止线 11 个走查问题，其中 2 个未复现：
+   | (1) 路口面畸形 6 处；
+   | (2) 切线与道路面不垂直 3 处；
+
+3. | 完成上下行斑马线合并代码的开发：
+   | (1) 修复比对逻辑错误引起的切线顺序错位异常；
+   | (2) 修复直线延长线交点计算错误引起的合并几何异常问题；
+   | (3) 路口衔接处道路面宽度过窄时忽略斑马线的生成；
+
+4. | (1) 优化切线比对逻辑错误引起的斑马线异常超出问题；
+   | (2) 梳理 0423 道路面、路口面走查问题，整理质检项分类；
+
+5. | (1) 分析苏州走查问题，细化质检项；
+   | (2) 调查部分斑马线对齐错误的问题；
+
+6. | (1) 分析苏州 0428 走查结果：PH3.4，共 17 个 P0 错误；
+   | (2) 初步制定 SD 质检项及其检查规则；
+
+月度备忘录
+~~~~~~~~~~
+
+待办事项
+^^^^^^^^
+
+-  ☐ **上下行高程一致性：**
+   维护上下行道路的高程一致性，让上下行高程对齐，一期开发首尾； 0403
+   发现调整完程序在 calc road boundary 进入死循环了；
+
+-  ☒ **SD 编译发布**\ ：SD 编译发布流水线对接，参考 HD
+   进行周级数据发布；全国发数以及定投：优化的平滑性、路口的优化、跨城市的效果；
+
+-  ☐ **SD 停止线和斑马线**\ ：生成新要素并进行联调显示，转换为 15
+   级进行显示；苏州市范围内的停止线和斑马线显示异常，0414 daily
+   数据未复现；7 级路斑马线重叠概率比较低；
+
+-  ☐ **统计项补齐**\ ：补充路口统计项，提高统计项对路口异常的覆盖率；
+
+提交记录
+^^^^^^^^
+
+.. code:: bash
+
+   git commit -m "[mapauto6-23748] UPDOWN: fix some issue and open up-down button."
+   git commit -m "[mapauto6-23748] UPDOWN: turn down the up-down button because calc road boundary can't finish."
+   git commit -m "[HDMap-Master-1915] ZEBRA&STOPLINE: add new feature for sd."
+   git commit -m "[HDMap-Master-1915] ZEBRA&STOPLINE: convert to tile of level 15."
+   git commit -m "[HDMap-Master-1915] ZEBRA&STOPLINE: fix height lower than cross issue."
+   git commit -m "[HDMap-Master-1915] ZEBRA&STOPLINE: add try catch for stop line."
+   git commit -m "[HDMap-Master-1915] ZEBRA&STOPLINE: adjust some parameters."
+   git commit -m "[HDMap-Master-1915] ZEBRA&STOPLINE: fix long stopline and zebra."
+   git commit -m "[HDMap-Master-1915] ZEBRA&STOPLINE: make cutline aligned."
+   git commit -m "[HDMap-Master-1915] ZEBRA&STOPLINE: build R-tree with cross id."
+   git commit -m "[HDMap-Master-1915] ZEBRA&STOPLINE: use rtree of boost."
+   git commit -m "[HDMap-Master-1915] ZEBRA&STOPLINE: normal fit concave cross."
+   git commit -m "[HDMap-Master-1915] ZEBRA&STOPLINE: process md cross."
+   git commit -m "[HDMap-Master-1915] ZEBRA&STOPLINE: fix cutline order error."
+
+.. _2日常积累:
+
+2、日常积累
+-----------
+
+.. _21-数据库相关:
+
+2.1 数据库相关
+~~~~~~~~~~~~~~
+
+#spatialite
+
+在 SQL 中依据 path_id 排序后，再依据 seq 进行二次排序。
+
+.. code:: sql
+
+   SELECT  FROM tmp_md_link WHERE mp_id != -1 ORDER BY path_id,seq;
+
+.. _22-经纬度距离近似计算公式:
+
+2.2 经纬度距离近似计算公式
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+#gis
+
+球赤道上环绕地球一周走一圈 360° 共 40075.04
+km，每一度在赤道上的长度计算如下：
+
+.. math:: 40075.04\mathrm{\ km}/360°=111.31955\mathrm{\ km}
+
+令 A 点经纬度分别为 :math:`\lambda_a,\varphi_a`\ ，B 点的经纬度分别为
+:math:`\lambda_b,\varphi_b`\ ，\ :math:`d`
+为距离，则任意两点距离计算公式为：
+
+.. math:: d＝111.31\cdot \cos \left(\frac{1}{\sin\varphi_a\cdot\sin\varphi_b+\cos\varphi_a\cdot\cos\varphi_b\cos(\lambda_b—\lambda_a)}\right)
+
+.. _23-r-树和-rd-树:
+
+2.3 R 树和 RD 树
+~~~~~~~~~~~~~~~~
+
+#R树
+
+定义
+^^^^
+
+R 树作为 B
+树向多维空间发展的另一种形式，是一种用于高效地进行多维空间范围查询的空间数据结构。它特别适用于最近邻搜索和窗口查询。R
+树是一种平衡树结构，其中每个节点表示空间中的一个超矩形。根节点表示整个空间，每个子节点表示空间的一个子区域。树是通过沿着选择的轴将空间分成两半，然后递归地将每半分割，直到满足停止条件而构建的。
+
+当使用对象变成文档时，就无法直接使用 R
+树了，因为无法为文档定义一个矩形框。但我们可以把这种方法在集合类型上稍作改动，称作
+RD 树（RD是 *Russian Doll* 的意思）；RD
+树的思想就是用集合替代矩形框，也就是说一个集合可以包含其它子集。
+
+切勿简单的认为一棵 m 阶的 B 树是 m 叉树，虽然存在四叉树、八叉树，及
+VP树/R树/R\*树/R+树/X树/M树/线段树/希尔伯特 R 树/优先 R
+树等空间划分树，但与B树完全不等同。
+
+开源库
+^^^^^^
+
+目前主要的两个 R 树实现代码是：
+
+1. `RTree.h <https://github.com/nushoin/RTree>`__, Yariv Barkan
+   实现的纯头文件的开源 R 树源码，目前在项目中使用时经常失败；
+
+2. `rtree <https://www.boost.org/doc/libs/1_66_0/libs/geometry/doc/html/geometry/reference/spatial_indexes/boost__geometry__index__rtree.html>`__,
+   Boost 实现的 R 树，位于 boost::geometry::index::rtree，速度稍慢些；
+
+这里主要介绍 Boost 中的 R 树，其定义如下：
+
+.. code:: cpp
+
+   template
+   <
+       typename Value,                                 // 参与构建 RTree 索引的值
+       typename Parameters,                                  // RTree 构建的参数
+       typename IndexableGetter = index::indexable<Value>,
+                                             //从Value中分离可索引几何对象的函数对象 
+       typename EqualTo = index::equal_to<Value>,        //Value相等判断的函数对象
+       typename Allocator = boost::container::new_allocator<Value>  //空间配置器
+   >
+   class rtree{};
+
+使用如下：
+
+.. code:: cpp
+
+   #include <boost/geometry/index/rtree.hpp>
+
+   namespace bg = boost::geometry;
+   namespace bgi = boost::geometry::index;
+
+   typedef bg::model::point<double, 2, bg::cs::cartesian > _point;
+   typedef bg::model::box<_point> _box;
+   typedef std::pair<_box, int> _value;
+   typedef bgi::rtree<_value, bgi::quadratic<16>> _rtree;
+
+   void main(){
+   	// 创建
+   	_rtree _cross_boost_tree;
+   	// 转换参数
+   	_box box(_point(env.xMin, env.yMin), _point(env.xMax, env.yMax));
+   	// 插入 R 树
+   	_cross_boost_tree.insert(std::make_pair(box, cross.id));
+   	// 查找
+   	std::vector<_value> res;
+   	_box bs(_point(xmin,ymin), _point(xmax, ymax));
+   	// bgi::intersects(b)的意思是，用相交作为条件
+   	// 查得的结果都放入 result_list
+   	_cross_boost_tree.query(bgi::intersects(bs), std::back_inserter(res));
+   }
+
+Boost 支持的几种空间查询规则如下：
+
+   .. figure:: pic/202304/boost-rtree-search.png
+      :align: center
+      :alt: 空间几何关系
+
+实现
+^^^^
+
+.. code:: cpp
+
+   // Include necessary headers
+   #include <iostream>
+   #include <fstream>
+   #include <vector>
+   #include <string>
+   #include <cstdlib>
+   #include <ctime>
+
+   // Define the dimension of the data points
+   #define DIMENSION 2
+
+   // Define the maximum and minimum values for the data points
+   #define MAX_VALUE 1000
+   #define MIN_VALUE 0
+
+   // Define the number of data points to generate
+   #define NUM_POINTS 1000
+
+   // Define the maximum and minimum values for the range query
+   #define MAX_RANGE 100
+   #define MIN_RANGE 10
+
+   // Define the number of queries to generate
+   #define NUM_QUERIES 10
+
+   // Define the maximum and minimum values for the leaf and node capacity
+   #define MAX_CAPACITY 10
+   #define MIN_CAPACITY 5
+
+   // Define the structure for a data point
+   struct Point {
+       int id;
+       std::vector<int> coords;
+   };
+
+   // Define the structure for a range query
+   struct RangeQuery {
+       std::vector<int> minCoords;
+       std::vector<int> maxCoords;
+   };
+
+   // Define the structure for a node in the R-tree
+   struct Node {
+       bool isLeaf;
+       std::vector<Node*> children;
+       std::vector<Point*> points;
+   };
+
+   // Function to generate a random integer between min and max (inclusive)
+   int randomInt(int min, int max) {
+       return rand() % (max - min + 1) + min;
+   }
+
+   // Function to generate a random data point
+   Point* generatePoint(int id) {
+       Point* p = new Point;
+       p->id = id;
+       for (int i = 0; i < DIMENSION; i++) {
+           p->coords.push_back(randomInt(MIN_VALUE, MAX_VALUE));
+       }
+       return p;
+   }
+
+   // Function to generate random range query
+   RangeQuery* generateRangeQuery() {
+       RangeQuery* q = new RangeQuery;
+       for (int i = 0; i < DIMENSION; i++) {
+           int minCoord = randomInt(MIN_VALUE, MAX_VALUE - MIN_RANGE);
+           int maxCoord = randomInt(minCoord + MIN_RANGE, MAX_VALUE);
+           q->minCoords.push_back(minCoord);
+           q->maxCoords.push_back(maxCoord);
+       }
+       return q;
+   }
+
+   // Function to generate a random R-tree
+   Node* generateRtree(int capacity) {
+       Node* root = new Node;
+       root->isLeaf = true;
+       for (int i = 0; i < capacity; i++) {
+           Point* p = generatePoint(i);
+           root->points.push_back(p);
+       }
+       return root;
+   }
+
+   int main() {
+       // Seed the random number generator
+       srand(time(NULL));
+
+       // Generate data points
+       std::vector<Point*> points;
+       for (int i = 0; i < NUM_POINTS; i++) {
+           Point* p = generatePoint(i);
+           points.push_back(p);
+       }
+
+       // Generate range queries
+       std::vector<RangeQuery*> queries;
+       for (int i = 0; i < NUM_QUERIES; i++) {
+           RangeQuery* q = generateRangeQuery();
+           queries.push_back(q);
+       }
+
+       // Generate R-tree
+       Node* root = generateRtree(randomInt(MIN_CAPACITY, MAX_CAPACITY));
+
+       // Print out the data points, range queries, and R-tree
+       // ...
+
+       return 0;
+   }
+
+.. _24-计算几何:
+
+2.4 计算几何
+~~~~~~~~~~~~
+
+#计算几何
+
+GC-01: 多边形面积计算
+^^^^^^^^^^^^^^^^^^^^^
+
+   .. figure:: pic/202304/GC-01.png
+      :align: center
+      :alt: 多边形面积计算
+
+这里提供依据向量进行多边形面积计算的公式推导。首先考虑最简单的三角形的面积计算公式，令三角形的三个顶点为
+:math:`P_1,P_2,P_3` 则有：
+
+.. math::
+
+   \begin{aligned}
+   S_{\Delta P_1P_2P_3}
+   &=\frac{1}{2}\cdot\|(P_2-P_1)\times(P_3-P_1)\| \\
+   &=\frac{1}{2}\cdot\|P_2\times P_3-P_2\times P_1-P_1\times P_3+P_1\times P_1\| \\
+   &=\frac{1}{2}\cdot\|P_2\times P_3+P_1\times P_2+P_3\times P_1\| \\
+   &=\frac{1}{2}\cdot\left\|\sum_{i=1}^3(P_i\times P_{i+1})\right\|,\quad \mathrm{here}\ P_3=P_1.
+   \end{aligned}
+
+注意这里用到了向量叉乘的反向结合律，即：\ :math:`P_2\times P_1=-P_1\times P_2`\ ；同理可以验证四边形的面积计算公式也符合上面的规律，继而可以推证多边形的面积计算公式为：
+
+.. math::
+
+   S=\frac{1}{2}\cdot\left\| \sum_{i=1}^{n}(P_i\times P_{i+1}) \right\|
+   ,\quad\mathrm{here}\  P_{n+1}=P_1.
+
+.. code:: cpp
+
+   //叉积,可以用来判断方向和求面积
+   double cross(Point a,Point b,Point c){
+       return (c.x-a.x)*(b.y-a.y) - (b.x-a.x)*(c.y-a.y);
+   }
+
+   //求多边形的面积
+   double S(Point p[],int n){
+       double ans = 0;
+       p[n] = p[0];
+       for(int i=1;i<n;i++){
+          ans += fabs(cross(p[0],p[i],p[i+1]));
+       }
+       return ans / 2.0;
+   }
+
+GC-02: 线段中垂线计算
+^^^^^^^^^^^^^^^^^^^^^
+
+   .. figure:: pic/202304/GC-02.png
+      :align: center
+      :alt: 中垂线计算
+
+.. code:: cpp
+
+   //求线段的中垂线  
+   inline Line getMidLine(const Point &a, const Point &b) {  
+       Point mid = (a + b);  
+       mid.x/=2.0;  
+       mid.y/=2.0;  
+       Point tp = b-a;  
+       return Line(mid, mid+Point(-tp.y, tp.x));  
+   } 
+
+GC-03: 点线间最短距离
+^^^^^^^^^^^^^^^^^^^^^
+
+   .. figure:: pic/202304/GC-03.png
+      :align: center
+      :alt: 点线间最短间距
+
+.. code:: cpp
+
+   //求点到线的最短距离  
+   double inline getMinDistance(Point &point, Line& geom){
+       if(geom.size() != 2){ return -1.0; }
+       Point& A = geom.front();
+       Point& B = geom.back();
+       Point AB = B - A;
+       Point AP = point - A;
+       return fabs(cross(AB, AP) / AB.modulus());
+   }
+
+GC-04: 多边形顺序判断
+^^^^^^^^^^^^^^^^^^^^^
+
+   .. figure:: pic/202304/GC-04.png
+      :align: center
+      :alt: 多边形顺序
+
+.. code:: cpp
+
+   int check_polygon_clockwise(
+       int cross_id,
+       const CoordinateSequence &polygon, 
+       std::map<Line, std::list<Line>> &edge_map_of_polygon)
+   {
+       // 边界条件
+       Coordinate last_pt(0.0, 0.0);
+       if(polygon.size() < 3) { return false; }
+       if(!(polygon.front() == polygon.back())){
+           last_pt = polygon.front();
+       }
+
+       // 符号判定
+       auto is_same_sign = [](double& a, double& b){
+           return (a < 0) && (b < 0);
+       };
+
+       // 计算多边形面积从而确定其顺序
+       double last_si = std::numeric_limits<double>::quiet_NaN();
+       int concave_cnt = 0;
+       double s = 0.0;
+       for(int i = 0; i < polygon.size(); ++i){
+           double si = 0.0;
+           if(i == polygon.size() - 1){
+               if(!(last_pt == Coordinate(0.0, 0.0))){
+                   // 多边形最后一个点不是首点时
+                   Line line = Line(polygon.at(i), last_pt);
+                   si = cross(polygon.at(i), last_pt);
+                   if(edge_map_of_polygon.count(line) == 0){
+                       edge_map_of_polygon.insert({line, {line}});
+                   }else{
+                       edge_map_of_polygon.at(line).push_back(line);
+                   }      
+               }
+           }else{
+               Line line = Line(polygon.at(i), polygon.at(i + 1));
+               si = cross(polygon.at(i), polygon.at(i + 1));
+               if(edge_map_of_polygon.count(line) == 0){
+                   edge_map_of_polygon.insert({line, {line}});
+               }else{
+                   edge_map_of_polygon.at(line).push_back(line);
+               }  
+           }
+           s += si;
+           if(!std::isnan(last_si)){
+               if(!is_same_sign(last_si, si)){
+                   concave_cnt++;
+               }
+           }
+           last_si = si;
+       }
+
+       if(concave_cnt > 0){
+   	    // 可能为凹多边形
+       }
+
+       return s < 0;
+   }
+
+GC-05: 直线交点
+^^^^^^^^^^^^^^^
+
+   .. figure:: pic/202304/GC-05.png
+      :align: center
+      :alt: 多边形顺序
+
+.. code:: cpp
+
+   LineLineRelation line_line_math_intersection(
+       const Coordinate& p1_a, const Coordinate& p1_b,
+       const Coordinate& p2_a, const Coordinate& p2_b,
+       Coordinate& result)
+   {
+       Coordinate e1 = p1_b - p1_a;
+       Coordinate e2 = p2_b - p2_a;
+       e1 = e1.normalize();
+       e2 = e2.normalize();
+       const Coordinate& P1 = p1_a;
+       const Coordinate& P2 = p2_a;
+       Coordinate P1P2 = P2 - P1;
+       double cross_e1_e2 = cross_direction(e1, e2);
+       if(fabs(cross_e1_e2) < 0.0871){
+           // 夹角小于 5° 或大于 175° 时认为是平行线
+           return LineLineRelation::LINE_PARALLEL; // 两条线平行
+       }
+       double t1 = cross_direction(P1P2, e2)/ cross_e1_e2;
+       double t2 = cross_direction(P1P2, e1)/ cross_e1_e2;
+
+       // 如果计算结果不一致则说明计算异常
+       Coordinate P = P1 + e1 * t1;
+       Coordinate P_ = P2 + e2 * t2;
+       if(!(P == P_)){
+           return LineLineRelation::LINE_UNKOWN; // 计算异常
+       }
+
+       // 取均值以提高准确度
+       print_point(P);
+       print_point(P_);
+       result = P + P_;
+       result.x = result.x * 0.5;
+       result.y = result.y * 0.5;
+       return LineLineRelation::LINE_INTERSECTION;
+   }
+
+.. _25-道路术语:
+
+2.5 道路术语
+~~~~~~~~~~~~
+
+#道路导航简写
+
+高速公路导航提示中IC、JC、SA等字样的含义解释：
+
+-  **IC** : Inter Change
+   英文缩写，意为高速公路转换出入口，即高速公路至一般公路的出入匝道。从标有“IC”的地方，可以下高速公路。
+
+-  **JC** : Joint Change/Circuit
+   的英文缩写，意为高速公路连接口或连接匝道。即不同高速公路之间的连接线路。从标有“JC”可以直接转到另一条高速公路上。
+
+-  **SA** : Service Area 的英文缩写，意为服务区。特指高速公路服务区。
+
+-  **PA** : Parking Area 的英文缩写，意为停车区域。特指高速公路停车区。
+
+-  **TG** : Toll Gate
+   的英文缩写，意为收费站。遇到这个标志，您要掏腰包了。
+
+-  **IN** : 路径入口。一般是指环岛的入口，或从辅路进到主路的地方。
+
+-  **OUT** : 路径出口。一般是指环岛的出口，或从主路转到辅路的的地方。
+
+.. _26-准召率和召回率:
+
+2.6 准召率和召回率
+~~~~~~~~~~~~~~~~~~
+
+#准召率
+
+不妨举这样一个例子：某池塘有1400条鲤鱼，300只虾，300只鳖。现在以捕鲤鱼为目的。撒一大网，逮着了700条鲤鱼，200只虾，100只鳖。那么，这些指标分别如下：
+
+.. code:: python
+
+   正确率 = 700 / (700 + 200 + 100) = 70%
+   召回率 = 700 / 1400 = 50%
+   F1 值 = 70% * 50% * 2 / (70% + 50%) = 58.3%
+
+不妨看看如果把池子里的所有的鲤鱼、虾和鳖都一网打尽，这些指标又有何变化：
+
+.. code:: python
+
+   正确率 = 1400 / (1400 + 300 + 300) = 70%
+   召回率 = 1400 / 1400 = 100%
+   F1 值 = 70% * 100% * 2 / (70% + 100%) = 82.35%
+
+参考文献
+~~~~~~~~
+
+1.  lovebay.
+    `计算几何常用的函数/方法 <https://it.cha138.com/shida/show-300567.html>`__\ [EB/OL].
+    #计算几何
+
+2.  开心经验.
+    `纬度距离计算公式 <https://www.kxting.com/article/20221021/557980.html>`__\ [EB/OL].
+
+3.  知乎. `PostgreSQL 中的 R 树和 RD
+    树介绍 <https://zhuanlan.zhihu.com/p/488550385?utm_id=0>`__\ [EB/OL].
+
+4.  CSDN 博客.
+    `什么是R树 <https://blog.csdn.net/zhongkeyuanchongqing/article/details/118229271>`__\ [EB/OL].
+
+5.  CSDN 博客.
+    `【树】从二叉树到空间索引树 <https://blog.csdn.net/u013589768/article/details/130020053>`__\ [EB/OL].
+
+6.  CSDN 博客. `#
+    高速公路导航提示中IC、JC、SA等字样的含义 <https://blog.csdn.net/qixiaoyu718/article/details/79218674>`__\ [EB/OL].
+
+7.  HBLOG. `#
+    准确率(Precision)、召回率(Recall)、F值(F-Measure) <https://mp.weixin.qq.com/s?__biz=MzAxMjY5NDU2Ng==&mid=2651862219&idx=2&sn=528c13c548a856131106ff754102ad93>`__\ [EB/OL].
+
+8.  知乎. `# 如何使用
+    boost::geometry::index::rtree <https://zhuanlan.zhihu.com/p/38009066>`__\ [EB/OL].
+
+9.  CSDN 博客. `#
+    Boost.Geometry的RTree空间索引 <https://blog.csdn.net/ljp341621/article/details/119684904>`__\ [EB/OL].
+
+10. Adam Wulkiewicz. `Boost.Geometry R-tree speeding up geographical
+    computation <https://archive.fosdem.org/2020/schedule/event/boostgeometry_rtree_speeding_up_geographical_computation/attachments/slides/3894/export/events/attachments/boostgeometry_rtree_speeding_up_geographical_computation/slides/3894/FOSDEM2020_Boost_Geometry_R_tree.pdf>`__\ [EB/OL].
+
+11. CSDN 博客. `R 树算法 C++
+    实现 <https://blog.csdn.net/piaoyang_/article/details/103837955>`__\ [EB/OL].
+
+12. Wolfram Mathword.
+    `多边形面积计算公式 <https://mathworld.wolfram.com/PolygonArea.html>`__\ [EB/OL].
+
+13. CSDN 博客. `#
+    直线射线线段的相交判断 <https://blog.csdn.net/csxiaoshui/article/details/73614352>`__\ [EB/OL].
+
+14. 博客园. #
+    `机器学习算法中的准确率(Precision)、召回率(Recall)、F值(F-Measure) <https://www.cnblogs.com/Zhi-Z/p/8728168.html>`__\ [EB/OL].
+
+.. _3-系统及软件:
+
+3. 系统及软件
+-------------
+
+.. _31-mac-常用软件梳理:
+
+3.1 Mac 常用软件梳理
+~~~~~~~~~~~~~~~~~~~~
+
+#mac软件
+
+1. Yoink：文件置物架，用于便捷的文件拷贝；
+
+2. DataGraph：数据可视化工具；
+
+3. Mos：优化 MAC 鼠标操作；
+
+4. TinyCal：日历状态栏工具；
+
+5. MacDroid：MAC 和手机传输文件工具；
+
+6. Obsidian：笔记本管理工具；
+
+7. Snipaste：截图工具；
+
+.. _32-gdb-使用-core-文件:
+
+3.2 gdb 使用 core 文件
+~~~~~~~~~~~~~~~~~~~~~~
+
+#core
+
+什么是 core 文件
+^^^^^^^^^^^^^^^^
+
+当程序运行过程中出现 ``Segmentation fault (core dumped)``
+错误时，程序停止运行，并产生 core 文件。core
+文件是程序运行状态的内存映象。使用 gdb 调试 core
+文件，可以帮助我们快速定位程序出现段错误的位置。当程序访问的内存超出了系统给定的内存空间，就会产生
+``Segmentation fault (core dumped)``\ ，因此，段错误产生的情况主要有：
+
+| (1) 访问不存在的内存地址；
+| (2) 访问系统保护的内存地址；
+| (3) 数组访问越界等；
+
+core dumped
+又叫核心转储，当程序运行过程中发生异常导致程序异常退出时，由操作系统把程序当前的内存状况存储在一个
+core 文件中，也即 core dumped。
+
+调试 core 文件
+^^^^^^^^^^^^^^
+
+.. code:: bash
+
+   gdb <program> core    # 用 gdb 同时调试一个运行程序和 core 文件
+
+   (gdb) l（list）        # 显示源代码，并且可以看到对应的行号；
+   (gdb) b（break）x      # x是行号，表示在对应的行号位置设置断点；
+   (gdb) p（print）x      # x是变量名，表示打印变量x的值；
+   (gdb) r（run）         # 表示继续执行到断点的位置；
+   (gdb) n（next）        # 表示执行下一步；
+   (gdb) c（continue）    # 表示继续执行；
+   (gdb) q（quit）        # 表示退出gdb；
+   (gdb) info share      # 查看已加载的动态库；
+   (gdb) bt              # 查看程序堆栈信息；
+
+.. _参考文献-2:
+
+参考文献
+~~~~~~~~
+
+1. CSDN 博客. `#
+   linux下使用gdb调试core文件 <https://blog.csdn.net/A_L_A_N/article/details/124725664>`__\ [EB/OL].
+
+.. |image1| image:: D:\Ashinjero\Jaxin's%20question%20list\2209-2307-Baidu\pic\202304\boost-rtree-search.png
+.. |image2| image:: D:\Ashinjero\Jaxin's%20question%20list\2209-2307-Baidu\pic\202304\GC-01.png
+.. |image3| image:: D:\Ashinjero\Jaxin's%20question%20list\2209-2307-Baidu\pic\202304\GC-02.png
+.. |image4| image:: D:\Ashinjero\Jaxin's%20question%20list\2209-2307-Baidu\pic\202304\GC-03.png
+.. |image5| image:: D:\Ashinjero\Jaxin's%20question%20list\2209-2307-Baidu\pic\202304\GC-04.png
+.. |image6| image:: D:\Ashinjero\Jaxin's%20question%20list\2209-2307-Baidu\pic\202304\GC-05.png

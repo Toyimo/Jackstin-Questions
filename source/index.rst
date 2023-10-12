@@ -12,7 +12,7 @@ Welcome to Jackstin's question list's documentation!
    
    work/W1.TJISM.rst
    work/W2.Baidu.rst
-
+   work/W3.GeoScene.rst
 
 Indices and tables
 ==================

@@ -1,0 +1,401 @@
+Question List in January, 2023
+==============================
+
+.. raw:: html
+
+   <html xmlns="http://www.w3.org/1999/xhtml"><head></head><body><div>
+     <font face="华文楷体">不知道自己想要的是什么，却总是左顾右盼，瞻前顾后，才是最可怕的人生。</font></div>
+   <div align="right">——老片复盘半只猫</div>
+   <div align="right">评王家卫《东邪西毒》欧阳锋与洪七</div></body></html>
+
+.. _1工作记录:
+
+1、工作记录
+-----------
+
+.. _w1-0102-to-0106:
+
+W1. 0102 to 0106
+~~~~~~~~~~~~~~~~
+
+1. | 排查修复上海高程断裂问题（输出 log **32** 条）：
+   | (1) 城市/高速高程短 LINK
+     后继未与调整基线对齐（\ **3**\ ）：已修复；
+   | (2) 无双向路标识的双向路引起的 LINK
+     断裂（\ **23**\ ）：生产（\ **6**\ ），log 误报（过滤 **17** ）;
+   | (3) 路口面几何形状畸形问题（\ **1**\ ）：反馈生产；
+   | (4) 前驱后继 LINK 水平间距过大 >1m 问题（\ **1**\ ）：反馈生产；
+   | (5) 其他误报（\ **4**\ ）；
+
+.. _w2-0109-to-0113:
+
+W2. 0109 to 0113
+~~~~~~~~~~~~~~~~
+
+1. | (1) 整理小鹏 P5 NGP 体验报告；
+   | (2) 学习现行 zlevel 处理方案，梳理目前 SD
+     处理中高程处理代码的位置；
+
+2. | (1) 编译运行程序，完成前期准备，能够看到目前的 SD 数据渲染效果；
+   | (2) 整理 HD 数据的 LINK 平滑方案，根据 SD 数据特性初步制定 SD
+     高程平滑方案：
+   |  a. 总体思路：依据距离–高程坐标作 B 样条插值拟合；
+   |  b.
+     水平反算：根据插值点的距离–高程坐标依据水平线性插值反算插值点的水平坐标；
+   |  b. 注意事项：多条 LINK
+     串在一起进行平滑、需要明确高程平滑的处理阈值；
+
+3. | (1) 完成 SD 高程平滑方案的制定；
+   | (2) 依据平滑方案初步构建高程 bspline 插值代码；；
+
+4. | (1) 调试高程 bspline
+     平滑参数，寻找合适阈值以在尽量少插点的前提下保证平滑性；完善平滑方案中的坐标换算代码；测试效果如下，证实单
+     link 处理效果的确不明显；；
+   | (2) 依据讨论结果整理基于凸角检测的平滑方案；
+
+5. | (1) 依据凸角检测平滑现阶段复杂 zlevel
+     压盖算法中存在的高程锐角问题；
+   | (2) 设计讨论复杂 zlevel 压盖关系的处理方案，将 0/1 相对压盖提升为
+     0/1/2/3... 的绝对压盖；
+
+.. _w3-0128-to-0203:
+
+W3. 0128 to 0203
+~~~~~~~~~~~~~~~~
+
+1. | (1) 完成串线 link 间基于凸角检测的 SD 高程平滑代码，统计 link
+     间夹角信息；
+   | (2) 排查分析 SD 高程问题，初步推测是 lbr/lane 与 link 对齐的问题；
+
+2. | (1) 改变高程凸角检测平滑算法距离计算方式，修复高程坐标转换问题；
+   | (2) 初步完成单条 link
+     内基于凸角检测的高程平滑代码，折角有所缓解，考虑进一步进行插值；
+   | (3) 检查发现 SD
+     数据高程问题原因在于三角网的建立错误，待核对代码位置；
+
+3. | (1) 修复进行平滑时由于 sh 与 xyz 坐标转换问题导致的高程异常；
+   | (2) 完成凸角检测平滑的代码，对比线性插值、B
+     样条、凸角检测三种方案的插值效果，后续考虑结合凸角检测和 B
+     样条进行进一步的效果优化；
+
+4. | (1) 完善相对 zlevel 转换为绝对 zlevel 的方案；
+   | (2) 梳理现行的 zlevel 提升方案，初步构建该方案的代码框架；
+
+5. | (1) 初步实现单 link 的 zlevel 提升代码；
+   | (2) 新增对 zlevel 全为 0 的 link 的缓冲区处理；
+
+6. | (1) 完善 link 压盖缓冲区存在多前驱后继关系时的 zlevel
+     提升处理，符合预期效果；
+   | (2) 部分路口处存在高程陡坡，考虑针对近路口处 link 进行特殊处理；
+   | (3) 排查测试区域发现的 38 个坡度 > 15°的点位问题，归纳为 3
+     类问题：a. 路口高程配合问题，包括近邻路口问题、短 link 截断问题；b.
+     单 link 平滑度不够问题，提高处理阈值；c.
+     立交连续跨压路段呈现的高程起伏问题；
+
+7. | 解决单 link 平滑度不够以及失效问题：
+   | (1) xyz 转换为 sh
+     后横纵坐标相差过大，凸角检测失效，引入高程缩放因子的代码；
+   | (2) 高程变化点过近引起的单 link
+     平滑失效问题：引入道格拉斯函数作数据抽稀；
+
+月度备忘录
+~~~~~~~~~~
+
+**提交记录**
+
+.. code:: bash
+
+   git commit -m "[mapauto6-23748] SMOOTH: add 2 elevation smooth method."
+   git commit -m "[mapauto6-23748] ZLEVEL: add proc_overlap_zlevel2() function."
+   git commit -m "[mapauto6-23748] ZLEVEL: process buffer zlevel with distance."
+   git commit -m "[mapauto6-23748] SMOOTH: add douglas, adjust sh2xyz converter."
+
+.. _2日常积累:
+
+2、日常积累
+-----------
+
+.. _21-r-tree:
+
+2.1 R-Tree
+~~~~~~~~~~
+
+TODO
+
+.. _22-指数平滑:
+
+2.2 指数平滑
+~~~~~~~~~~~~
+
+一次指数平滑算法（single exponential
+smoothing）隶属于指数平滑，其家族成员主要有：一次平滑，二次平滑和三次平滑
+3
+类。在这三类算法中，一次平滑法为历史数据的加权预测，二次平滑法适用于具有一定线性趋势的数据，三次平滑法则是在二次平滑法基础上再平滑一次，其适用于具有一定曲线趋势关系时使用。算法主要有两个参数：初始值和
+:math:`\alpha` 值参数。一次指数平滑的状态方程如下：
+
+.. math:: \hat{x}_{t+1}=s_t;\quad s_t=\alpha x_t+(1-\alpha)s_{t-1};
+
+| **初始值**
+| 是平滑的最初起点值，一般取数据前 1 期，2 期，3 期，4 期或 5
+  期的平均值作为初始值，如果数据序列越少则初始值 S0
+  应该取更多前几期的平均值，因为数据序列较少时前期的重要性相对较高。
+
+| **:math:`\alpha` 值**
+| 在指数平滑算法中， :math:`\alpha` 是新数据的权重，取值范围为
+  :math:`[0,1]`\ ，越大意味着新数据所占的权重越高，而原预测值所占权重越低。如果数据波动不大，一般值取的较小些比如
+  :math:`[0.1, 0.5]` 之间，如果数据波动较大则 :math:`\alpha`
+  值取值相对较大些，比如 :math:`[0.6, 0.8]` 之间。
+
+.. _23-曲线平滑:
+
+2.3 曲线平滑
+~~~~~~~~~~~~
+
+#曲线
+
+在介绍曲线插值平滑之前，需要了解一下后文中常见的作为自变量的 :math:`t`
+是个啥。对于曲线平滑算法的操作来说，这个自变量 :math:`t`
+构成的集合可以称为节点向量。
+
+设 :math:`\mathbf{T}` 是由 :math:`m+1`
+个非递减数构成的集合，\ :math:`t_0\leqslant t_1\leqslant t_2\leqslant\cdots\leqslant t_m`\ ；\ :math:`t_i`
+称为\ **节点**\ （Knots）, 集合 :math:`\mathbf{T}`
+称为\ **节点向量**\ （Knot Vector）, 半开区间 :math:`[t_i, t_{i+1})`
+是第 :math:`i` 个节点区间（Knot Span）。
+
+| (1) **多重节点**\ ：注意某些 :math:`t_i`
+  可能相等，某些节点区间会不存在。
+|  a. **多重节点** :math:`t_i(k)`\ ：若某一节点 :math:`t_i` 出现
+  :math:`k` 次，即 :math:`t_i= t_{i+1} = \cdots = t_{i+k-1}, k>1`\ ；
+|  b. **简单节点**\ ：若节点 :math:`t_i` 只出现一次，则 :math:`t_i`
+  是一个简单节点；
+| (2) **节点向量的均匀性**\ ：根据节点间距确定节点向量均匀性。
+|  a. **均匀的**\ ：如果节点等间距，即对
+  :math:`0\leqslant i \leqslant m-1` 而言
+  :math:`u_{i+1} - u_i`\ 是一个常数；
+|  b. **非均匀的**\ ：否则节点向量成为非均匀的；
+
+Bézier Curve
+^^^^^^^^^^^^
+
+Bézier Curve 于 1962 年由法国工程师 *Pierre Bézier*
+所发表，通常翻译为贝塞尔曲线；其主要意义在于无论是直线或曲线都能在数学上予以描述。贝塞尔曲线完全由其控制点决定其形状，\ :math:`n`
+个控制点对应着 :math:`n-1`
+阶的贝塞尔曲线，并且可以通过递归的方式来绘制。
+
+   .. figure:: pic/202301/bezier.gif
+      :align: center
+      :alt: 贝塞尔曲线
+
+**Pt. :math:`2`\ ：一阶公式**\ ，给定点 :math:`P_0,P_1`
+贝塞尔曲线表现为两点间的直线，\ :math:`t\in[0,1]`\ 。
+
+.. math:: B(t)=P_0+(P_1-P_0)\cdot t=(1-t)\cdot P_0+tP_1
+
+**Pt. :math:`3`\ ：二阶公式**\ ，给定点 :math:`P_0,P_1,P_2`
+贝塞尔曲线表现为如下形式，\ :math:`t\in[0,1]`\ 。
+
+.. math:: B(t)=(1-t)^2P_0+2t(1-t)P_1+t^2P_2
+
+**Pt. :math:`4`\ ：三阶公式**\ ，给定点 :math:`P_0,P_1,P_2,P_4`
+贝塞尔曲线表现为如下形式，\ :math:`t\in[0,1]`\ 。
+
+.. math:: B(t)=P_0(1-t)^3+3P_1t(1-t)^2+3P_2t^2(1-t)+P_3t^3
+
+**Pt. :math:`n`\ ：一般公式**\ ，给定点 :math:`P_0,P_1,\cdots,P_n`
+贝塞尔曲线表现为如下形式，\ :math:`t\in[0,1]`\ 。
+
+.. math:: B(t)=\sum_{i=0}^n\begin{pmatrix}n\\i\end{pmatrix}P_i(1-t)^{n-i}t^i
+
+高阶 Bézier 可以通过不断递归到一阶。上式可以看出，Bézier 系数是二项式
+:math:`\left(t+\left(1-t\right)\right)^n = (1)^n`
+的展开，故而其各项系数之和为 1。Bézier
+曲线始终会在包含了所有控制点的最小凸多边形中，而不是按照控制点的顺序围成的最小多边形。其第一个控制点和最后一个控制点，恰好是曲线的起始点和终点。
+
+.. _b--spline-curve:
+
+B–Spline Curve
+^^^^^^^^^^^^^^
+
+B–Spline Curve 于 1965 年由 *Isaac Jacob Schoenberg* 创造，其全称为
+Basis Spline Curve，通常翻译为 B 样条曲线；是 Bezier Curve
+一般化的一种形式。B
+样条曲线曲面具有几何不变性、凸包性、保凸性、变差减小性、局部支撑性等许多优良性质，是CAD
+系统中常用的几何表示方法。
+
+Bézier 曲线的阶次是控制点个数减 1，
+且移动一个控制点整段曲线都会变化，曲线的整体性较强；而 B
+样条则可以指定阶次（即
+:math:`k`\ ），控制点的改变仅仅改变曲线的部分形状，而不是整体。具体的实现主要是把一条曲线变为多段贝塞尔曲线的拼接。将
+Bézier 曲线一般方程中的伯恩斯坦函数拆出来：
+
+.. math:: B_{i,n}(t)=C_i^n(1-t)^{n-i}t^i=\begin{pmatrix}n\\i\end{pmatrix}(1-t)^{n-i}t^i
+
+则可以 Bézier 曲线方程写成如下含有伯恩斯坦基函数 :math:`B_{i,n}(t)`
+的形式：
+
+.. math:: B(t)=\sum_{i=0}^nP_iB_{i,n}(t)
+
+**B 样条曲线的一般公式**\ ，给定点 :math:`P_0,P_1,\cdots,P_n` ，以及
+Cox-de Boor 递归公式 :math:`N_{i,k}(t)`\ ， 则其公式为：
+
+.. math:: B(t)=\sum_{i=0}^nP_iN_{i,k}(t)
+
+式中，\ :math:`k` 为基函数的阶，Cox-de Boor 递归公式的函数如下：
+
+.. math::
+
+   \begin{align*}
+   N_{i,0}(t)&=\begin{cases}
+   1 & \text{ if } t_i\leqslant t<t_{i+1}\\
+   0 & \text{ otherwize } 
+   \end{cases}&,k=1\\
+   N_{i,k}(t)&=\frac{t-t_i}{t_{i+k}-t_i}N_{i,k-1}(t)+\frac{t_{i+k+1}-t}{t_{i+k+1}-t_{i+1}}N_{i+1,k-1}(t)&,k\geqslant 2
+   \end{align*}
+
+实现中一般将 order 定义为 k 阶，density 定义为两点间的最短间距，小于 1
+时定义为 1 即可。
+
+参考文献
+~~~~~~~~
+
+1.  知乎.
+    `一次指数平滑、二次指数平滑、三次指数平滑 <https://zhuanlan.zhihu.com/p/441373033>`__\ [EB/OL].
+
+2.  百度百科.
+    `贝塞尔曲线 <https://baike.baidu.com/item/%E8%B4%9D%E5%A1%9E%E5%B0%94%E6%9B%B2%E7%BA%BF/1091769?fr=aladdin>`__\ [EB/OL].
+
+3.  知乎. `曲线篇:
+    贝塞尔曲线 <https://zhuanlan.zhihu.com/p/136647181>`__\ [EB/OL].
+
+4.  知乎. `曲线篇：深刻理解B
+    样条曲线（上） <https://zhuanlan.zhihu.com/p/139759835>`__\ [EB/OL].
+
+5.  知乎.
+    `在B-spline中，如何理解knot和breakpoint？彼此之间联系和区别是什么？ <https://www.zhihu.com/question/52199904/answer/1216384445>`__\ [EB/OL].
+
+6.  知乎.
+    `综述：城市道路自动驾驶车辆规划与控制技术 <https://zhuanlan.zhihu.com/p/597632790?utm_id=0#showWechatShareTip?utm_source=wechat_session&utm_medium=social&wechatShare=1&s_r=0>`__\ [EB/OL].
+
+7.  稀土掘金.
+    `深入理解贝塞尔曲线 <https://juejin.cn/post/6844903666361565191>`__\ [EB/OL].
+
+8.  百度文库. `B
+    样条曲线 <https://wenku.baidu.com/view/6a29a15081c4bb4cf7ec4afe04a1b0717fd5b3ba.html?fr=aladdin664466&ind=1&_wkts_=1673421440152&bdQuery=B+%E6%A0%B7%E6%9D%A1%E6%9B%B2%E7%BA%BF>`__\ [EB/OL].
+
+9.  Bilibili.
+    `Obsidian入门指南（三-4） <https://www.bilibili.com/read/cv18084877>`__\ [EB/OL].
+
+10. PaperPass.
+    `专利引用格式 <https://www.paperpass.com/knowledge/5675.html>`__\ [EB/OL].
+
+11. 知乎.
+    `贝塞尔曲线与B样条 <https://zhuanlan.zhihu.com/p/369753167?utm_id=0>`__\ [EB/OL].
+
+.. _3专业知识:
+
+3、专业知识
+-----------
+
+.. _31-python--spatialite:
+
+3.1 python spatialite
+~~~~~~~~~~~~~~~~~~~~~
+
+安装准备
+^^^^^^^^
+
+1. ``pysqlite``: 用于操作 SQLite 数据库的包；
+
+2. ``libspatialite5``: 空间拓展 spatialite 的核心操作库；
+
+3. ``spatialite-bin``: 用于操作 spatialte 的一些二进制文件工具；
+
+4. ``python-pyspatialite``: 用于操作空间库的一些包；
+
+.. code:: bash
+
+   brew install libspatialite
+
+具体使用
+^^^^^^^^
+
+.. code:: python
+
+   import sqlite3
+   conn = sqlite3.connect(":memory:")
+   conn.enable_load_extension(True)
+   conn.execute('SELECT load_extension("libspatialite.7.dylib")')
+
+.. _32-c:
+
+3.2 C++
+~~~~~~~
+
+#cplusplus
+
+.. _passing-const-xxx--as-this-argument-discards-qualifiers:
+
+passing 'const xxx ' as 'this' argument discards qualifiers
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+   因为对象 ``a`` 被 ``const`` 修饰，表示该对象无法被修改，但是
+   ``A::getHeight()`` 并没有 ``const``
+   后缀修饰，导致编译器认为该函数可能会有修改对象的可能而报此错误。如果确认只是
+   ``getter`` 函数且不修改数据，将成员函数以 ``const``
+   后缀修饰即可消除该错误。
+
+.. _参考文献-2:
+
+参考文献
+~~~~~~~~
+
+1.  姚连璧等.
+    `基于高精地图的道路场景三维建模 <pdf/高精地图/基于高精地图的道路场景三维建模.pdf>`__\ [J].
+    测绘科学与技术, 2022-10(1): 1-12.
+
+2.  王华等.
+    `基于GIS数据的大尺度三维路网的自动生成 <pdf/高精地图/Automatic_generation_of_large-scale_3D_road_networks_based_on_GIS_data.pdf>`__\ [J].Computers
+    & Graphics, 2021(96): 71-81.
+
+3.  Zhang, Xuequan, et al.
+    `用于构建大规模虚拟路网的模板式三维道路建模 <pdf/高精地图/Template-Based_3D_Road_Modeling_for_Generating_Large-Scale_Virtual_Road_Network_Environment.pdf>`__\ [J].
+
+4.  Kai-Wei Chiang, et al. `基于移动端测绘的 OpenDRIVE
+    格式高清地图自动路网建模 <pdf/高精地图/Automated_Modeling_of_Road_Networks_for_High-Definition_Maps_in_OpenDRIVE_Format_Using_Mobile_Mapping_Measurements.pdf>`__\ [J].
+
+5.  百度.
+    `一种道路压盖关系的确定方法及装置 <pdf/道路压盖/CN107591080A-一种道路压盖关系的绘制方法及装置.pdf>`__\ [P].中国专利:
+    CN105956088B, 2016.
+
+6.  城市生活.
+    `一种道路压盖关系绘制的方法及装置 <pdf/道路压盖/CN107591080A-一种道路压盖关系的绘制方法及装置.pdf>`__\ [P].
+    中国专利: CN107591080A, 2018.
+
+7.  腾讯.
+    `电子地图系统中立交道路的渲染方法和装置 <pdf/道路压盖/CN103208226A-电子地图系统中立交道路的渲染方法和装置.pdf>`__\ [P].
+    中国专利: CN103208226A, 2013.
+
+8.  比亚迪.
+    `三维道路交叉口的模型化方法及装置 <pdf/道路压盖/CN101930624B-三维道路交叉口的模型化方法及装置.pdf>`__\ [P].
+    中国专利: CN101930624B, 2009.
+
+9.  阿里巴巴.
+    `一种道路高程的确定方法和装置 <pdf/道路压盖/CN111501496B-一种道路高程的确定方法和装置.pdf>`__\ [P].
+    中国专利: CN111501496B, 2019.
+
+10. 高德.
+    `一种道路绘制方法及装置 <pdf/道路压盖/CN107545833B-一种道路绘制方法及装置.pdf>`__\ [P].
+    中国专利: CN107545833B, 2016.
+
+11. 知乎. `[LaTeX 绘图] tikz
+    绘制流程图，概述和两个示例 <https://zhuanlan.zhihu.com/p/82435856>`__
+    [EB/OL].
+
+12. Python与开源GIS .\ `开始使用
+    SpatiaLite <https://www.osgeo.cn/pygis/spatialite-begin.html#spatialite>`__\ [EB/OL].
+
+13. CSDN 博客. `# passing 'const xxx ' as 'this' argument discards
+    qualifiers <https://blog.csdn.net/creambean/article/details/89222454>`__\ [EB/OL].
+
+.. |image1| image:: D:\Ashinjero\Jaxin's%20question%20list\2209-2307-Baidu\pic\202301\bezier.gif
