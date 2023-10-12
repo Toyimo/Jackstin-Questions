@@ -1,0 +1,561 @@
+Question List in September, 2022
+================================
+
+New life.
+
+.. _1首周记录:
+
+1、首周记录
+-----------
+
+**主要任务**\ ：熟悉团队，安装运行环境，学习人机共驾文档，了解高精地图数据格式，编译运行程序。
+
+.. _11-安装运行环境:
+
+1.1 安装运行环境
+~~~~~~~~~~~~~~~~
+
+Mac 常用快捷键
+^^^^^^^^^^^^^^
+
+| ``[control]+[space]``\ ，切换输入法
+| ``[fn]+[顶部触屏]``\ ，F1–F12 键
+| ``[command]+[回退]``\ ，删除
+| ``[command]+[Q/W]``\ ，关闭当前窗口
+| ``[command]+[M]``\ ，最小化当前窗口
+| ``[command]+[tap]``\ ，切换窗口
+
+安装 GCC-G++
+^^^^^^^^^^^^
+
+#cplusplus
+
+.. code:: bash
+
+   sudo yum install -y http://mirror.centos.org/centos/7/extras/x86_64/Packages/centos-release-scl-rh-2-3.el7.centos.noarch.rpm # scl-rh
+   sudo yum install -y http://mirror.centos.org/centos/7/extras/x86_64/Packages/centos-release-scl-2-3.el7.centos.noarch.rpm # scl
+   sudo yum install devtoolset-8-gcc-c++  # 安装制定版本 C++
+   scl enable devtoolset-8 bash           # 切换到指定版本
+   g++ -v -E -x c++ -                     # 查看 GCC 安装路径
+
+GIT 常用操作
+^^^^^^^^^^^^
+
+#git
+
+1. 撤回操作：
+
+   .. code:: bash
+
+      git reflog             # 查看历史变更记录并寻找 ID
+      git reset --hard ${ID} # 将刚刚操作的记录撤回
+
+2. 切换到指定远程分支：
+
+   .. code:: bash
+
+      git branch -a # 查看所有分支
+      git branch -r # 查看远程分支
+      git branch    # 查看本地现有分支
+      git checkout -b ${本地分支名} origin/${远程分支名} # 关联远程分支到本地
+      git push ${远程主机名} ${本地分支名}:${远程分支名} # 推送指定分支
+
+Linux 相关
+^^^^^^^^^^
+
+#linux
+
+1. 将 linux 文件下载到本地：
+
+   .. code:: bash
+
+       python -m SimpleHTTPServer 8012 # 在该目录下创建 HTTP 服务
+       # 浏览器输入 开发机地址:8012 右键下载相关文件
+
+2. 更改 sh 文件执行权限：
+
+   .. code:: bash
+
+      chmod u+x *.sh  # u 表示用户，g 表示用户组，o 表示其他， u+x 表示为用户添加执行权限
+
+3. 压缩及解压操作：
+
+   .. code:: bash
+
+      tar -tf xxx.tar.gz          # 仅查看而不压缩
+      tar -zxvf xxx.tar.gz -C xxx # 解压到指定 xxx 目录
+
+4. 终端清屏
+
+.. code:: bash
+
+   printf "\033c" # 相当于 windows 终端的 cls
+                  # 本质是打印了 <ESC>c 即 VT-XXX 表示 "Full Reset (RIS)" 的转义码
+
+.. _12-学习相关文档:
+
+1.2 学习相关文档
+~~~~~~~~~~~~~~~~
+
+部分术语
+^^^^^^^^
+
+| HD – High Definition Map，高精地图
+| ToB – To Business，服务对象是企业
+| OEM – Original Equipment Manufacturer，原始设备制造商
+| ANP – Apollo Navigation Pilot，百度驾驶辅助产品
+| P0 –
+  接口测试，就是给定一个入口看看从入口开始能不能走到自己改动代码的位置
+| P1 – BUG 级别定义的第 2 级，P0 为 BUG 级别的第一级
+
+高精地图要素
+^^^^^^^^^^^^
+
+| lane – HD，车道
+| link – HD，道路实体
+| junction – HD，道路交叉口
+| barrier – HD，路障
+| diversion – HD，改道/支岔
+| zebra – HD，斑马线
+| curb – HD，路缘，路沿
+
+高程对齐
+^^^^^^^^
+
+用高程标识，暂时不考虑其他要素试试看怎么处理，出现问题要及时讨论。日报不必讨论分析问题，只说明今日所做内容即可。
+
+参考文献
+~~~~~~~~
+
+1. CSDN博客. `CentOS
+   7环境下安装高版本GCC <https://blog.csdn.net/b_ingram/article/details/121569398>`__\ [EB/OL].
+
+2. CSDN博客. `linux 解决 " command not found: shopt "的 "~/.bashrc"
+   配置问题 <https://blog.csdn.net/qq_36148847/article/details/79261067>`__\ [EB/OL]
+
+3. 知乎.
+   `高精地图简介 <https://zhuanlan.zhihu.com/p/487799933>`__\ [EB/OL].
+
+4. 51CTO博客.
+   `GCJ-02火星坐标系和WGS-84坐标系转换关系 <https://blog.51cto.com/u_15328720/3763497>`__\ [EB/OL].
+
+5. CSDN博客.\ `WGS84与GCJ02经纬度坐标转换介绍 <https://blog.csdn.net/feinifi/article/details/120547127>`__\ [EB/OL].
+
+.. _2工作记录:
+
+2、工作记录
+-----------
+
+.. _w1-0905-to-0909:
+
+W1. 0905 to 0909 
+~~~~~~~~~~~~~~~~~
+
+1. 0908 申请开发机，下载 iCoding 并安装 bcloud；
+
+2. | 0909 编译 renderbidb 项目代码并生成 pb 以及 json 数据；
+   | 0909 使用 viewer 对生成的 json 数据进行查看；
+   | 0909 学习相关课程并完成 QC 认证；
+
+.. _w2-0912-to-0916:
+
+W2. 0912 to 0916
+~~~~~~~~~~~~~~~~
+
+1. | 0913 编译代码，运行城市 bidb 测试数据，用 viewer 查看生成的 json 和
+     pb 数据；
+   | 0913 编译 highway 分支，测试运行高速渲染 pb 数据；
+   | 0913 熟悉高程对齐的技术流程，掌握核心问题，GCJ02 和 WGS84 坐标系；
+
+2. | 0914 了解 bidb 数据规格，学习 renderdb
+     数据处理文档，尽快掌握技术流程；
+   | 0914
+     了解高程对齐现状，熟悉主要业务点，定位主体代码，讨论主要任务量；
+
+3. | 0915
+     整理现有高程对齐代码处理流程，梳理核对功能代码位置，分析主要技术点；
+   | 0915 简单了解火星坐标系 GCJ-02 的加密思路，理解其与 WGS84
+     坐标系的正算反算关系；
+
+4. | 0916 整理 V2 引入 DEM 算法处理流程，核对功能代码位置；
+   | 0916 生成虚拟 DEM，运行 V2 程序查看处理结果，分析主要任务点；
+
+.. _w3-0919-to-0923:
+
+W3. 0919 to 0923
+~~~~~~~~~~~~~~~~
+
+1. | 0919 尝试引入真实 DEM 数据进行测试；
+   | 0919 尝试初步构建隧道问题解决代码方案，并对方案进行讨论；
+
+2. | 0920 请教接口以及调试的相关方法，尝试编写代码并进行调试；
+   | 0920 尝试第 1
+     种思路，测试DEM与路面高程差正负判断隧道并插值，测试失败；
+
+3. | 0921 生成数据时发现一些平滑问题，正在向现光请教；
+   | 0921 梳理 BIDB 表间关系，尝试构建利用隧道标识进行高程对齐的代码；
+
+4. | 0922 构建隧道连通性代码并确认起始点、终止点；
+   | 0922 正在写 BD_CHA
+     表的隧道高程平滑代码，需要整合之前的代码，还未写完；
+
+5. | 0923 完成 BD_CHA 表的高程对齐代码；
+   | 0923 尝试关联 BD_LAN 表路面要素，进行隧道区域路面要素的高程调整。
+
+.. _w4-0926-to-0930:
+
+W4. 0926 to 0930
+~~~~~~~~~~~~~~~~
+
+1. | 0926 完成 BD_LBR、BD_BAC 路面要素表隧道区域高程对齐的代码；
+   | 0926 讨论隧道周边区域的高程凸起问题，探讨解决方案：隧道延伸法/ DEM
+     最小值滤波法；
+
+2. | 0927 分析起终点寻址代码覆盖隧道路段包含岔路口的情况；
+   | 0927 进一步完善最小值滤波 DEM 和隧道延伸策略的思路；
+
+3. | 0928 罗列连续隧道内含有岔路的几种情况，分析具体方案；；
+   | 0928 尝试延伸隧道范围，构建缓冲区执行隧道插值；
+
+4. | 0929 分析如何将含岔路的算法拓展到全域离散隧道的处理；
+   | 0929 统计目前的 DEM 处理结果，并对高程异常情况进行归纳分析；；
+
+.. _3基础知识:
+
+3、基础知识
+-----------
+
+.. _31-坐标系统:
+
+3.1 坐标系统
+~~~~~~~~~~~~
+
+.. _gcj--02-坐标系:
+
+GCJ–02 坐标系
+^^^^^^^^^^^^^
+
+GCJ-02
+俗称「\ **火星坐标系**\ 」，实际上它的正式名称为「地形图非线性保密处理技术」。在
+2002 年完成研制，故代号为 GCJ-02。
+
+EGM96 高程基准
+^^^^^^^^^^^^^^
+
+国家 1985 高程基准为我国现行高程基准，EGM96 则是美国 BAI
+推出的一种适用于全球范围，并综合利用现有全球大量重力数据所计算出来的高精度大地水准面模型。
+
+.. _32-c-基础:
+
+3.2 C++ 基础
+~~~~~~~~~~~~
+
+#cplusplus
+
+.. _unorderedmap:
+
+unordered_map
+^^^^^^^^^^^^^
+
+重点了解一下自定义哈希函数；
+
+.. code:: c++
+
+   template < class Key,                      // unordered_map::key_type
+              class T,                        // unordered_map::mapped_type
+              class Hash = hash<Key>,         // unordered_map::hasher
+              class Pred = equal_to<Key>,     // unordered_map::key_equal
+              class Alloc = allocator< pair<const Key,T> > 
+              // unordered_map::allocator_type
+              > class unordered_map;
+
+..
+
+   | **第 1 个参数**\ ，存储 key ；
+   | **第 2 个参数**\ ，存储 value；
+   | **第 3 个参数**\ ，为哈希函数的函数对象：它将 key
+     作为参数，并利用函数对象中的哈希函数返回类型为 ``size_t``
+     的唯一哈希值，默认值为\ ``std::hash<key>``\ ；
+   | **第 4 个参数**\ ，为等比函数的函数对象：它内部通过等比操作符
+     ``’=='`` 来判断两个 key 是否相等，返回值为bool 类型，默认值是
+     ``std::equal_to<key>``\ ；
+
+.. _int16t-与-int32t:
+
+int16_t 与 int32_t
+^^^^^^^^^^^^^^^^^^
+
+``int_t`` 为一个结构的标注，可以理解为 ``type/typedef``
+的缩写，表示它是通过 ``typedef``
+定义的，而不是一种新的数据类型。因为跨平台，不同的平台会有不同的字长，所以利用预编译和
+``typedef`` 可以最有效的维护代码。
+
+.. code:: c++
+
+   typedef signed char        int8_t;
+   typedef unsigned char      uint8_t;
+   typedef signed short       int16_t;
+   typedef unsigned short     uint16_t;
+   typedef signed int         int32_t;
+   typedef unsigned int       uint32_t;
+   typedef signed long long   int64_t;
+   typedef unsigned long long uint64_t;
+
+list 链接前驱后继
+^^^^^^^^^^^^^^^^^
+
+.. code:: c++
+
+   #include <iostream>
+   #include <map>
+   #include <list>
+   #include <algorithm>
+
+   bool get_link_connection(std::map<int,int> link_table){
+       std::list<std::list<int>> tunnels;
+       std::map<int, std::list<int>*> heads;
+       std::map<int, std::list<int>*> tails;
+       for(auto& link : link_table){
+           // head->tail 映射关系
+           int head = link.first;
+           int tail = link.second;
+           // 检查 tail 是否出现在现有链表 A 的头部
+           if(heads.count(tail) != 0){
+               // 检查 head 是否出现在某个链表 B 的尾部
+               if(tails.count(head) != 0){
+                   // head 需要将链表 B 挂到链表 A 的前面
+                   std::list<int>* p_tunnel_a = heads[tail];//it_tail_in_head->second;
+                   std::list<int>* p_tunnel_b = tails[head];//it_head_in_tail->second;
+                    // 维护 A 的头表
+                   int old_head = p_tunnel_a->front();
+                   int new_head = p_tunnel_b->front();
+                   heads.erase(old_head); // 删除 A 的头
+                   heads[new_head] = p_tunnel_a;//相当于更新了 B 的头表
+                   // 将链表 B 挂到链表 A 的前面
+                   p_tunnel_a->insert(
+                     p_tunnel_a->begin(), 
+                     p_tunnel_b->begin(), 
+                     p_tunnel_b->end());
+                   // 然后删除链表 B 的相关信息
+                   tails.erase(p_tunnel_b->back());
+                   p_tunnel_b->clear();//释放内存
+                   // 如何从 list<list> 中删除
+               }else{
+                   // 直接将 head 插入链表并维护头表
+                   std::list<int>* p_tunnel = heads[tail];//it_tail_in_head->second;
+                   // 维护头表
+                   int old_head = p_tunnel->front();
+                   heads.erase(old_head);
+                   heads[head] = p_tunnel;
+                   // 将 head 插入链表头前
+                   p_tunnel->push_front(head);
+               }
+           }else{
+               // tail 并不是现有链表的头部而是一个新元素
+               // 检查 head 是否出现在某个链表 B 的尾部
+               if(tails.count(head) != 0){
+                   // head->tail 顺序链接到现有链表 B 并维护尾表
+                   std::list<int>* p_tunnel = tails[head];//it_head_in_tail->second;
+                   // 维护头表
+                   int old_tail = p_tunnel->back();
+                   tails.erase(old_tail);
+                   tails[tail] = p_tunnel;
+                   // 将 tail 插入链表尾后
+                   p_tunnel->push_back(tail);
+                   
+               }else{
+                   // 哪都没有，直接新建一个链表
+                   std::list<int> tunnel;
+                   tunnel.push_back(head);
+                   tunnel.push_back(tail);
+                   tunnels.push_back(tunnel);
+                   tails[tail] = &tunnels.back();
+                   heads[head] = &tunnels.back();
+               }
+           }
+       }
+       // 为确保起始路段和终止路段都有记录,需要删除隧道们的最后一个链接元素
+       for(auto& tunnel : tunnels){ if(!tunnel.empty()) tunnel.pop_back(); }
+       // 删除重复元素
+       tunnels.remove_if([](std::list<int> value) {return (value.empty()); });
+       // 输出调查结果
+       for(auto& tunnel : tunnels){
+           for(auto& id: tunnel){
+               std::cout << id << std::endl;
+           }
+           std::cout << std::endl;
+       }
+       return true;
+   }
+
+   int main() {
+       std::map<int,int> data;
+       data[1165137]=1493480;
+       data[1493475]=1493477;
+       data[1493476]=1493475;
+       data[1493477]=1165137;
+       data[1493478]=1493476;
+       data[1493479]=13075;
+       data[1493480]=1493479;
+       get_link_connection(data);
+   }
+
+用 list
+存储的一个致命问题是没办法处理衡量包含岔路口的情况。所以要用前驱后继。
+
+C++ 矩阵输出美化
+^^^^^^^^^^^^^^^^
+
+.. code:: c++
+
+   #include <iostream>
+   #include <iomanip>
+   #include <sstream>
+
+   constexpr size_t nmax {100};
+
+   // 计算数字位数
+   size_t number_of_digits(double n) {
+   	std::ostringstream strs;
+   	strs << n;
+   	return strs.str().size();
+   }
+
+   void print_matrix(const double M[nmax][nmax], size_t n, size_t m) {
+   	size_t max_len_per_column[nmax];
+   	for (size_t j = 0; j < m; ++j) {
+   		size_t max_len {};
+   		for (size_t i = 0; i < n; ++i)
+   			if (const auto num_length {number_of_digits(M[i][j])}; 
+                   num_length > max_len)
+   				max_len = num_length;
+   		max_len_per_column[j] = max_len;
+   	}
+   	for (size_t i = 0; i < n; ++i)
+   		for (size_t j = 0; j < m; ++j)
+         std::cout << (j == 0 ? "\n| " : "") 
+                   << std::setw(max_len_per_column[j]) 
+                   << M[i][j] 
+                   << (j == m - 1 ? " |" : " ");
+   	std::cout << '\n';
+   }
+
+   int main(){
+   	const static double mat[nmax][nmax] = {		// On heap, not stack
+   		{ 2, 1, 2, 1, 6 },
+   		{ 6, -6, 6, 12, 36 },
+   		{ 4, 3, 3, -3, -1 },
+   		{ 2, 2, -1, 1, 10}
+   	};
+   	print_matrix(mat, 4, 5);
+   }
+
+Mac 使用 GCC
+^^^^^^^^^^^^
+
+Mac 的默认 GCC 是 MacOS Clang，为了切换成 GCC，需要用 brew
+安装指定版本的 GCC，然后将其配置为 Mac 的默认 C++
+编译器，然后就可以愉快的使用 GCC 了，参见参考文献 8 MacOS
+中基础调试C++算法。
+
+如果用 brew 安装 g++ 时报下面的错误：
+
+.. code:: bash
+
+   Error: Failure while executing; `git clone https://github.com/Homebrew/homebrew-cask /opt/homebrew/Library/Taps/homebrew/homebrew-cask --origin=origin --template=` exited with 128.
+
+则运行下面命令删除目录即可：
+
+.. code:: bash
+
+   rm -rf "/opt/homebrew/Library/Taps/homebrew/homebrew-cask"
+
+安装 oh-my-zsh：
+
+.. code:: bash
+
+   git clone https://github.com/ohmyzsh/ohmyzsh.git ~/.oh-my-zsh
+   cp ~/.oh-my-zsh/templates/zshrc.zsh-template ~/.zshrc # 拷贝配置文件
+
+安装 oh-my-zsh 插件：
+
+.. code:: bash
+
+   cd ~/.oh-my-zsh/custom/plugins/
+   ## 切换用户之后，记得 git 提速：
+   git config --global url."https://github.com.cnpmjs.org/".insteadOf "https://github.com/"
+    
+   # NO.1 使用自动快速跳转
+   ## plugins 添加 z
+    
+   # NO.2 zsh-syntax-highlighting：高亮命令输入
+   git clone https://github.com/zsh-users/zsh-syntax-highlighting.git
+   ## plugins 添加 zsh-syntax-highlighting （必须最后一个）
+   ## 最后一行：source ~/.oh-my-zsh/custom/plugins/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
+    
+   # NO.3 zsh-autosuggestions：自动提示输入提示
+   git clone https://github.com/zsh-users/zsh-autosuggestions
+   ## plugins 添加 zsh-autosuggestions
+    
+   # NO.4 zsh-history-substring-search：查找匹配前缀的历史输入
+   git clone https://github.com/zsh-users/zsh-history-substring-search.git
+   ## plugins 添加 zsh-history-substring-search
+
+配置 oh-my-zsh 文件：
+
+.. code:: bash
+
+   export ZSH="/home/work/.oh-my-zsh"
+   ZSH_THEME="robbyrussell"
+   HIST_STAMPS="yyyy-mm-dd"
+   plugins=(git z vi-mode zsh-autosuggestions zsh-history-substring-search zsh-syntax-highlighting)
+   source $ZSH/oh-my-zsh.sh
+   source ~/.oh-my-zsh/custom/plugins/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
+   source ~/.bashrc
+
+将 ZSH_THEME="robbyrussell" 内容替换成你想要的更换主题内容，如：ys。
+
+.. _33-遥感影像滤波:
+
+3.3 遥感影像滤波
+~~~~~~~~~~~~~~~~
+
+3000m 距离（可配置），然后正负
+
+DEM 最小值滤波 窗口大小可配置
+
+rm -rf "/opt/homebrew/Library/Taps/homebrew/homebrew-cask"
+
+.. _参考文献-2:
+
+参考文献
+~~~~~~~~
+
+1.  知乎. `从地球到火星～论 GCJ-02
+    及其衍生 <https://zhuanlan.zhihu.com/p/79027966>`__\ [EB/OL].
+
+2.  Github.
+    `PRCoords <https://github.com/Artoria2e5/PRCoords>`__\ [EB/OL].
+
+3.  Github.
+    `coordtransform <https://github.com/wandergis/coordtransform>`__\ [EB/OL].
+
+4.  CSDN博客.
+    `int8_t、int16_t、int32_t、int64_t、uint8_t、size_t、ssize_t区别 <https://blog.csdn.net/y2385750851/article/details/120594021>`__\ [EB/OL].
+
+5.  CSDN博客.
+    `C++中list详解 <https://blog.csdn.net/qq_44423388/article/details/126289452>`__\ [EB/OL].
+
+6.  CSDN博客. `opencv+GDAL
+    遥感影像滤波 <https://blog.csdn.net/wc781708249/article/details/78485415>`__\ [EB/OL].
+
+7.  CSDN博客.
+    `算法系列——迪杰斯特拉算法（Dijkstra） <https://blog.csdn.net/qq_40347399/article/details/119820276>`__\ [EB/OL].
+
+8.  知乎. `MacOS
+    中基础调试C++算法 <https://zhuanlan.zhihu.com/p/483256400>`__\ [EB/OL].
+
+9.  简书. `解决Homebrew下载更新极慢的问题 <>`__\ [EB/OL].
+
+10. 清华大学开源软件镜像站. `Homebrew / Linuxbrew
+    镜像使用帮助 <https://mirrors.tuna.tsinghua.edu.cn/help/homebrew/>`__\ [EB/OL].

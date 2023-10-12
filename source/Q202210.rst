@@ -1,0 +1,474 @@
+Question List in October, 2022
+==============================
+
+Try to adapt this new life.
+
+.. _1工作记录:
+
+1、工作记录
+-----------
+
+到下周五完成北京市高程数据处理，且坡度符合要求。需要考虑带隧道的情况、北京市全域的数据。
+
+.. _w1-1008-to-1014:
+
+W1. 1008 to 1014
+~~~~~~~~~~~~~~~~
+
+1. | 1008 完成隧道内包含岔路时的前置信息生成代码；
+   | 1008 整理高程对齐 badcase 文档以及相关统计项；
+
+2. | 1009 扩充包含岔路的隧道平滑代码；
+   | 1009 分析大窗口最小值 DEM 滤波方案；
+
+3. | 1010
+     测试扩充后代码是否能够正常运行，德胜口局部数据正常，北京全域数据尚未跑完；
+   | 1010 用数学工具简单测试处理效果并分析参数，形成初步方案；
+
+4. | 1011
+     测试北京全域高程数据渲染效果（开发机内存不够，用处理机处理中）；
+   | 1011 初步方案的问题 3
+     隧道出入口异常问题考虑构建隧道缓冲区，正在完善思路；
+
+5. | 1012 采用 49x49 高斯滤波、50x50 均值滤波处理 DEM 并生成统计数据（Q
+     保留图像特征）；
+   | 1012 测试并生成虚拟 DEM 的高程统计项以辅助分析（待做）；
+   | 1012 构建隧道出口缓冲区代码并用德胜口隧道数据进行验证；
+
+6. | 1013 在高斯滤波基础上用降采样后升采样的方式处理 DEM 中的异常凸起；
+   | 1014 隧道出入口缓冲区处理代码有一些 BUG，尚在调试；
+   | 1013 核对北京全域渲染数据编译中断问题；
+
+7. | 1014 隧道出口缓冲区代码增加覆盖支线隧道多后继情况的代码；
+   | 1014 继续开发隧道出入口缓冲区代码；
+
+.. _w2-1017-to-1021:
+
+W2. 1017 to 1021
+~~~~~~~~~~~~~~~~
+
+1. | 1017 解决增加缓冲区后隧道出入口异常问题；
+   | 1017 继续测试不同滤波组合的效果；
+
+2. 1018 修复误删代码；
+
+3. | 1019
+     修复并测试隧道缓冲区构建代码，用德胜口局部数据进行分析并得到统计项；
+   | 1019 撰写周报；
+
+4. | 1020 用 Daniel Lemire
+     的常量阶最小值滤波算法提高最小值滤波速度且效果无明显差异，将 400M
+     北京图像处理速度由平均 16min 缩短至平均 5 min；
+   | 1020 修正天津 DEM 投影，拼接北京邻域城市的 DEM 数据，拼接后达到
+     10GB；初步尝试用拼接后数据进行北京市全域高程对齐数据测试；
+
+5. | 1021
+     压缩拼接数据，执行滤波处理，测试北京全域高程对齐效果，检测到部分
+     BUG 正在修复；
+   | 1021 下载 90m、300m 全国 DEM 数据，测试数据可用性；
+
+.. _w3-1024-to-1028:
+
+W3. 1024 to 1028
+~~~~~~~~~~~~~~~~
+
+1. | 1024 整理文档，罗列到目前为止所遇到的问题并进行讨论；
+   | 1024 初步处理真实 DEM 与虚拟 DEM 之间的数据差异；
+
+2. | 1025 继续处理真实 DEM 与虚拟 DEM 数据之间的差异并进行统计分析；
+   | 1025 整理形成文档《差值 DEM 分析》；
+
+3. | 1026 学习整理 RenderDB 业务流程；
+   | 1026 学习虚拟 DEM 生成代码；
+
+4. | 1027 梳理城市高程预处理代码，定位路口拍平的逻辑位置；
+   | 1027 用处理机测试运行开发分支程序，暂未看到运行结果，
+   | 1027 初步设计路口拍平实现代码；
+
+5. | 1028 完成路口拍平的代码，运行并查看效果；
+   | 1028 熟悉代码结构，了解问题修复的主要流程；
+
+.. _2基础知识:
+
+2、基础知识
+-----------
+
+开源 GIS 工具网站 ：\ https://www.pianshen.com/article/72731502475/
+
+.. _21-遥感影像滤波:
+
+2.1 遥感影像滤波
+~~~~~~~~~~~~~~~~
+
+方案一确认 3000m 缓冲距离，可以配置缓冲距离的大小；方案二 是确认 DEM
+最小值滤波，然后可以配置滤波窗口的大小，初期打算先用数学工具试试。
+
+mac+vscode+python
+^^^^^^^^^^^^^^^^^
+
+#mac-python
+
+.. code:: bash
+
+   # 安装 PIP
+   curl 'https://bootstrap.pypa.io/get-pip.py' > get-pip.py
+   sudo python get-pip.py
+   sudo easy_install pip
+   brew install gdal # 安装 GDAL 库需要先用 brew 在电脑上安装
+   python3 -m pip install gdal  # 安装 GDAL
+   python3 -m pip install opencv-python # 安装 cv2
+
+global mapper
+^^^^^^^^^^^^^
+
+地图绘制软件，可以用来生成地形晕染图。
+
+1. 为什么 OpenCV 的滤波那么快？有加速算法。
+
+2. 能不能对自己写的最小值也进行一个加速？参考常量阶最小值滤波优化算法。
+
+Gaussian
+^^^^^^^^
+
+高斯滤波器是一种线性滤波器，能够有效的抑制噪声，平滑图像。离模板中心的距离越远，高斯滤波器的模板系数越小，因此高斯滤波器相比于均值滤波器对图像的模糊程度较小。二维高斯函数的数学形式如下所示：
+
+.. math:: G(x,y)=\frac{1}{2\pi\sigma^2}e^{-\frac{x^2+y^2}{2\sigma^2}}
+
+式中，\ :math:`x^2+y^2`
+表示邻域内其他像素与邻域内中心像素的距离，\ :math:`\sigma`
+表示标准差；二维高斯的图形表现为二维正态分布曲面；\ :math:`\sigma`
+越小则正态分布曲面越向上凸起，反之 :math:`\sigma`
+越大，正态分布曲面越平缓。
+
+   .. figure:: pic/202210/gaussian.png
+      :align: center
+
+由上图可知，\ :math:`\sigma`
+越大则高斯滤波越趋近于均值滤波，\ :math:`\sigma`
+越小则高斯滤波中间像素的影响力越大，高斯滤波将更趋近于原始图像。OpenCV
+的高斯核计算函数为：
+
+.. math:: G_i=\alpha\cdot \exp\left\{{-\frac{(i-(s_k-1)/2)^2}{2\sigma^2}}\right\}
+
+式中，\ :math:`s_k` 为 Kernel Size
+卷积核的大小，应为奇数；\ :math:`\alpha` 为令 :math:`\sum_iG_i=1`
+的归一化参数；当传入函数的 :math:`s_k=0` 时 CV
+将采用如下的方式计算默认的标准差大小。
+
+.. math:: \sigma=0.3\cdot((s_k-1)\cdot0.5-1)+0.8
+
+常量阶最小值滤波算法
+^^^^^^^^^^^^^^^^^^^^
+
+参考 *Daniel Lemire* 的 《Streming maximum-minimum filter using no more
+than three comparisons per
+element》\ `论文 <https://r-libre.teluq.ca/207/1/webmaximinalgo.pdf>`__\ 进行实现。下面粘贴
+C++ 的最小值版本：
+
+.. code:: c++
+
+   #include <deque>
+   #include <vector>
+   #include <cstdio>
+
+   const int maxn = 10;
+   std::deque <int> L;
+   std::vector<int> minval(maxn);
+
+   int main(){
+       std::vector<int> a = 
+         {0, 1, 9, 8, 2, 3, 7, 6, 4, 5};
+       // 0, 0, 1, 2, 2, 2, 3, 4, 4, 4
+       // 0, 0, 0, 1, 2, 2, 2, 3, 4, 4
+       unsigned int w = 5;
+       for(unsigned int i = 1; i < a.size(); i++){
+           if(i >= w){
+               minval[i - w] = a[L.size() > 0 ? L.front() : i-1];
+           }
+           if(a[i] > a[i-1]){
+               L.push_back(i - 1);
+               if(i == w + L.front()) L.pop_front();
+           }
+           else{
+               while(L.size() > 0){
+                   if(a[i] >= a[L.back()]){
+                       if(i == w + L.front()) L.pop_front();
+                       break;
+                   }
+                   L.pop_back();
+               }
+           }
+       }
+       minval[a.size() - w] = a[L.size() > 0 ? L.front() : a.size() - 1];
+       unsigned int w_2 = w / 2;
+       int f = minval[0];
+       int b = minval[a.size() - w];
+       std::vector<int> res;
+       while(w_2 > 0){
+           res.push_back(f);
+           w_2--;
+       }
+       for(unsigned int i = 0; i <= a.size() - w; i++){
+           res.push_back(minval[i]);
+       }
+       w_2 = w / 2;
+       while(w_2 > 0){
+           res.push_back(b);
+           w_2--;
+       }
+       for(unsigned int i = 0; i < res.size(); i++){
+           printf("%d ", res[i]);
+       }
+       return 0;
+   }
+
+.. _22-qgis-dem-三维可视化:
+
+2.2 QGIS DEM 三维可视化
+~~~~~~~~~~~~~~~~~~~~~~~
+
+参见参考文献 10 的处理步骤。渲染效果一般通过山体阴影实现，采用 WGS84
+经纬度地理坐标系时需要注意 z 因子使用 0.0001 来避免全域都被显示成黑色。
+
+.. _23-linux-系统学习:
+
+2.3 LINUX 系统学习
+~~~~~~~~~~~~~~~~~~
+
+创建用户
+^^^^^^^^
+
+.. code:: bash
+
+   # 创建用户
+   sudo useradd -m tongjiaxing
+   sudo passwd tongjiaxing # baidu@1476
+
+远程连接报错
+^^^^^^^^^^^^
+
+目前该问题仍未解决；
+
+.. code:: bash
+
+   ssh_exchange_identification: read: Connection reset by peer
+   # 1. IP 被拦截登录了;
+   # 2. /var 目录权限过大，导致ssh失败;
+
+.. _qgis-找不到-projdb:
+
+QGIS 找不到 proj.db 
+^^^^^^^^^^^^^^^^^^^^
+
+QGIS-LTR 版本，需要在 mac 系统中，打开 python，输入如下命令：
+
+.. code:: python
+
+   import os
+   os.environ["PROJ_LIB"]="/Applications/QGIS-LTR.app/Contents/Resources/proj"
+
+LINUX 下载文件
+^^^^^^^^^^^^^^
+
+.. code:: bash
+
+   wget -P data-2 http://10.12.206.61:8080/110000_rendersub_bidb_gcj02___1666854637_Awi0A0fh_bidb_1666855180_et9ksehT.db
+
+   wget -P keep http://10.25.70.189:8012/output/bidb2renderdb.tar.gz
+
+   10.162.120.18:8012
+   python -m SimpleHTTPServer 8012
+
+自定义回收站
+^^^^^^^^^^^^
+
+回收站语法规则定义：
+
+.. code:: bash
+
+   mkdir -p ~/.Trash
+   cat >>~/.bashrc<<EOF
+   #add by caimengzhi at $(date +%F) for Linux trash start
+   alias rm=trash
+   alias rl='ls ~/.Trash' 
+   alias ur=undelfile
+   undelfile() 
+   { 
+    mv -i ~/.Trash/\$@ ./ 
+   } 
+   trash() 
+   { 
+    mv \$@ ~/.Trash/ 
+   }
+   cleartrash() 
+   { 
+     read "confirm?Clear trash?[n]" confirm 
+     [$confirm = 'y' -o $confirm = 'Y'] && /usr/bin/rm -rf ~/.Trash/* 
+   }
+   #add by caimengzhi at $(date +%F) for Linux trash end
+   EOF
+   source ~/.bashrc
+
+使用：
+
+.. code:: bash
+
+   rm <filedirctory> # 删除文件夹
+   rm file.txt       # 删除文件
+   ur file.txt       # 撤销对 file.txt 的删除
+   ur <filedirctory> # 撤销对文件夹的删除
+   rl                # 列出回收站
+   cleartrash        # 清空回收站
+
+.. _24-高精地图学习:
+
+2.4 高精地图学习
+~~~~~~~~~~~~~~~~
+
+文章链接
+^^^^^^^^
+
+1. 九章智驾.
+   `如何实现“轻高精地图”的城市NOH？毫末自动驾驶的8大亮点 <https://www.eefocus.com/automobile-electronics/517919>`__\ [EB/OL].
+
+2. 车右智能.
+   `毫末智行的感知架构在演进中——Transformer在毫末的应用 <https://mp.weixin.qq.com/s/dGAoyHK15uCUpl5KBS3HUw>`__\ [EB/OL].
+
+3. 焉知新能源汽车.
+   `我们研究了特斯拉、毫末「自动驾驶算法」的秘密 <https://mp.weixin.qq.com/s/Y35KuGAKZyVynu2QRCTsWw>`__\ [EB/OL].
+
+GPS 的 RTK 芯片 + IMU 惯性导航硬件，激光雷达或视觉 SLAM
+进行自动驾驶导航定位。
+
+.. _25-c-日常积累:
+
+2.5 C++ 日常积累
+~~~~~~~~~~~~~~~~
+
+vector 去重
+^^^^^^^^^^^
+
+在依赖类型"XXXX::XX"前缺少typename关键字
+
+-  这个问题产生原因是编译器不能识别"XXXX::XX"是个啥，这到底是个类型呢，还是类得静态成员变量呢？
+
+-  解决方法也很简单就是在"XXXX::XX"前面加上typename，告诉编译器这是个类型。
+
+.. code:: c++
+
+   #include<bits/stdc++.h>
+   using namespace std;
+
+   struct De{
+       int a;
+       int b;
+       bool operator==(const De& b) const{
+           return this->a == b.a && this->b == b.b;
+       }
+       bool operator<(const De& b) const{
+           if(this->a == b.a){return this->b < b.b;}
+   	    else {return this->a < b.a;} 
+       }
+   };
+
+   // 去重
+   template<typename T>
+   bool make_unique(std::vector<T>& vec){
+       typename std::vector<T>::iterator it;
+       std::sort(vec.begin(), vec.end());
+       it = std::unique(vec.begin(), vec.end());
+       vec.erase(it, vec.end());
+       return true;
+   }
+
+   int main(){
+   	vector <De> vec = { {1, 1}, {2, 2}, {3, 2}, {3 ,2}, {4, 2}, {5, 2}, {6, 3}, {3, 1}, {3, 2}, {2, 2}, {1, 1}};
+       make_unique(vec);
+   	for(auto e : vec){
+   		printf("{%d, %d } ",e.a, e.b);
+   	}
+   } 
+
+GIT 切换到远程分支
+^^^^^^^^^^^^^^^^^^
+
+.. code:: bash
+
+   git checkout -b ${本地分支名} origin/${远程分支名}
+
+GIT 项目迭代概述
+^^^^^^^^^^^^^^^^
+
+.. code:: bash
+
+   # 项目相关
+   git clone -b ${指定分支} ${远程仓库}  # 1. 下载远程指定分支代码
+   git checkout -b dev                # 2. 新建本地开发分支
+   git push --set-upstream origin dev # 3. 将本地分支推送到远程仓库
+   git add .
+   git commit -m "[1026] xxxx"        # 4. 推送更改
+
+   # 常用命令
+   git log         				# 查看分支的以前的提交记录
+   git status							# 当前状态
+   git branch -a						# 查看所有分支
+   git checkout -f master	# 忽略本地修改并切换到 master 分支
+
+路口面高程在某一值域范围内时拍到 0，高程无明显异常。
+
+参考文献
+~~~~~~~~
+
+1.  CSDN 博客. `opencv+GDAL
+    遥感影像滤波 <https://blog.csdn.net/wc781708249/article/details/78485415>`__\ [EB/OL].
+
+2.  CSDN
+    博客.\ `Mac上pip安装包很慢？告诉你方法 <https://blog.csdn.net/yimenren/article/details/104696266/>`__\ [EB/OL].
+
+3.  CSDN 博客.\ `ssh_exchange_identification: read: Connection reset by
+    peer <https://blog.csdn.net/wngpenghao/article/details/120879813>`__\ [EB/OL].
+
+4.  知乎.
+    `为什么opencv的中值滤波那么快？ <https://www.zhihu.com/question/67987039>`__\ [EB/OL].
+
+5.  CSDN 博客.\ `OpenCV
+    图像上采样和降采样 <https://blog.csdn.net/weixin_45525272/article/details/121446923>`__\ [EB/OL].
+
+6.  CSDN
+    博客.\ `opencv高斯滤波GaussianBlur()详解(sigma取值) <https://blog.csdn.net/wuqindeyunque/article/details/103694900>`__\ [EB/OL].
+
+7.  CSDN 博客.
+    `git恢复commit过的代码 <https://blog.csdn.net/sinat_33718563/article/details/125993517>`__\ [EB/OL].
+
+8.  AI 研习社. `【AI
+    PC端算法优化】五，常量阶最大值最小值滤波算法 <https://job.yanxishe.com/blogDetail/18748>`__\ [EB/OL].
+
+9.  飞浆 AI Studio.
+    `OpenCV高斯滤波GaussianBlur <https://aistudio.csdn.net/62e38a51cd38997446774bd7.html?spm=1001.2101.3001.6650.4&utm_medium=distribute.pc_relevant.none-task-blog-2%7Edefault%7ECTRLIST%7Eactivity-4-81568844-blog-105547468.t0_edu_mix&depth_1-utm_source=distribute.pc_relevant.none-task-blog-2%7Edefault%7ECTRLIST%7Eactivity-4-81568844-blog-105547468.t0_edu_mix&utm_relevant_index=9>`__\ [EB/OL].
+
+10. open.gis.lab. `3D DEM Visualization In QGIS
+    3.0 <https://opengislab.com/blog/2018/3/20/3d-dem-visualization-in-qgis-30>`__\ [EB/OL].
+
+11. CSDN
+    博客.\ `项目开发git的基本使用流程 <https://blog.csdn.net/weixin_43504224/article/details/125047198>`__\ [EB/OL].
+
+12. Nhooo.
+    `Linux回收站机制实现过程及用法详解 <https://www.nhooo.com/note/qa37qh.html>`__\ [EB/OL].
+
+TODO
+----
+
+| -[ ] 修改 rm 操作在 linux 系统里构建回收站
+| -[ ] 新人月度串讲
+
+下周末串讲
+
+北京数据还是中断了。。
+
+| [均值 15x15] 0-2151
+| [均值 50x50] 0-2106
+| [高斯 50x50] 0-2137
+| [最小值滤波] -17-1976
+| [原始] 3-2188
+
+.. |image1| image:: D:\Ashinjero\Jaxin's%20question%20list\2209-2307-Baidu\pic\202210\gaussian.png

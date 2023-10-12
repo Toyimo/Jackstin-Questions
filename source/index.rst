@@ -7,35 +7,12 @@ Welcome to Jackstin's question list's documentation!
 ====================================================
 
 .. toctree::
-   :maxdepth: 12
+   :maxdepth: 4
    :caption: Contents:
    
-   Q202007.rst
-   Q202008.rst
-   Q202009.rst
-   Q202010.rst
-   Q202011.rst
-   Q202012.rst
-   Q202101.rst
-   Q202102.rst
-   Q202103.rst
-   Q202104.rst
-   Q202105.rst
-   Q202106.rst
-   Q202107.rst
-   Q202108.rst
-   Q202109.rst
-   Q202110.rst
-   Q202111.rst
-   Q202112.rst
-   Q202201.rst
-   Q202202.rst
-   Q202203.rst
-   Q202204.rst
-   Q202205.rst
-   Q202206.rst
-   Q202207.rst
-   Q202208.rst
+   work/W1.TJISM.rst
+   work/W2.Baidu.rst
+
 
 Indices and tables
 ==================
