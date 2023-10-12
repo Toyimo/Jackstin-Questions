@@ -318,8 +318,8 @@ OsgProjectManager
 实现两个类，即：\ ``InputShapeEventAdapter``\ 类和\ ``InputShapeEventHandler``\ 类，稍后通过
 UML 类图的方式对这两个类的使用方式进行简要介绍。
 
-.. figure:: pic/202012/EventAdapterHandler.svg
-   :alt: 
+.. .. figure:: pic/202012/EventAdapterHandler.svg
+..    :alt: 
 
 .. _header-n63:
 
