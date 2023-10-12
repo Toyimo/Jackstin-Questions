@@ -22,4 +22,5 @@ build:
   tools:
     python: '3.11'
   commands:
+    - python -m pip install --upgrade pip
     - pip install recommonmark
