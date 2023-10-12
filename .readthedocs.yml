@@ -20,9 +20,7 @@ formats: ['pdf','htmlzip']
 python:
   install:
     - method: pip
-      path: .
-      extra_requirements:
-        - recommonmark
+    - requirements: requirements.txt
 
 # build
 build:
