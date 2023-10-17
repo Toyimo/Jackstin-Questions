@@ -22,7 +22,7 @@ copyright = '2020, Jackstin'
 author = 'Jackstin'
 
 # The full version, including alpha/beta/rc tags
-release = 'Version 2023'
+release = 'V3.0.0'
 
 
 # -- General configuration ---------------------------------------------------
