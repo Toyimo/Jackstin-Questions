@@ -11,34 +11,6 @@ Question List in December, 2022
 
 工作内容不对外公开。
 
-月度备忘录
-~~~~~~~~~~
-
-**代码 Change LOG**
-
-.. code:: bash
-
-   # 1215
-   1. 修复前驱 roadclass<3 时前驱后继断裂的问题；
-   2. 修复对向 LBR 高程不一致时高程拉直失败的问题；
-   # 1229
-   1. 高程前置识别隧道并进行高程修正；
-
-**提交记录**
-
-.. code:: bash
-
-   git commit -m "[mapauto6-32083] 修复前驱后继 roadclass<3 的前 3 后 1/2 的对齐问题."
-   git commit -m "[mapauto6-34708] 修复右 LBR 与左 LBR 高程不一致时 LINK 高程拉直失效问题."
-   git commit -m "[mapauto6-34708] 修复左护栏对齐问题、护栏锯齿问题以及多前驱高速对齐问题."
-   git commit -m "[mapauto6-32083] 修复拉直时由于 LBR 和 LINK 高程不一致引起的断裂问题."
-   git commit -m "[mapauto6-32083] 修复城市/高速对齐时基准 LINK 过长时断裂问题、多路沿高程对齐问题; 补充断头路拉直处理代码."
-   git commit -m "[mapauto6-32083] 修复平滑 LINK 的路沿对齐问题."
-   git commit -m "[mapauto6-23748] 识别隧道场景并进行高程调整."
-   git commit -m "[mapauto6-23748] 高程偏移去除 -1.0 并添加高程分布统计工具函数."
-   git commit -m "[mapauto6-32083] 合入完整拉直代码; 修复桥洞长 LINK 拉直问题; 添加高程断裂识别输出."
-   git commit -m "[mapauto6-32083] 修复城市/高速结合处短 LINK 后继高程未修正问题."
-
 .. _2日常积累:
 
 2、日常积累
